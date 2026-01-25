@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Database>
+	<!-- QueryTypes must be declared first (required by Civ VII database system) -->
+	<QueryTypes>
+		<Row QueryType="Parameters"/>
+		<Row QueryType="ParameterDependencies"/>
+		<Row QueryType="DomainValues"/>
+		<Row QueryType="ParameterGroups"/>
+	</QueryTypes>
+
+	<!-- Custom Parameter Group for Continents++ Options -->
+	<ParameterGroups>
+		<Row GroupId="ContinentsPP_Options" Name="LOC_CONTINENTSPP_GROUP_NAME"/>
+	</ParameterGroups>
+
+	<!-- Parameter Definitions for Continents++ -->
+	<Parameters>
+		<!-- Water Coverage Option -->
+		<Row ParameterId="ContinentsPP_WaterCoverage"
+		     Name="LOC_CONTINENTSPP_WATER_COVERAGE_NAME"
+		     Description="LOC_CONTINENTSPP_WATER_COVERAGE_DESC"
+		     Domain="ContinentsPP_WaterCoverage"
+		     DefaultValue="WATER_68"
+		     ConfigurationGroup="Map"
+		     ConfigurationKey="ContinentsPP_WaterCoverage"
+		     GroupId="ContinentsPP_Options"
+		     Hash="0"
+		     SupportsSinglePlayer="1"
+		     SupportsLANMultiplayer="1"
+		     SupportsInternetMultiplayer="1"
+		     SortIndex="10"/>
+
+		<!-- Erosion Amount Option -->
+		<Row ParameterId="ContinentsPP_Erosion"
+		     Name="LOC_CONTINENTSPP_EROSION_NAME"
+		     Description="LOC_CONTINENTSPP_EROSION_DESC"
+		     Domain="ContinentsPP_Erosion"
+		     DefaultValue="EROSION_MEDIUM"
+		     ConfigurationGroup="Map"
+		     ConfigurationKey="ContinentsPP_Erosion"
+		     GroupId="ContinentsPP_Options"
+		     Hash="0"
+		     SupportsSinglePlayer="1"
+		     SupportsLANMultiplayer="1"
+		     SupportsInternetMultiplayer="1"
+		     SortIndex="20"/>
+
+		<!-- Continent Count Option -->
+		<Row ParameterId="ContinentsPP_ContinentCount"
+		     Name="LOC_CONTINENTSPP_CONTINENT_COUNT_NAME"
+		     Description="LOC_CONTINENTSPP_CONTINENT_COUNT_DESC"
+		     Domain="ContinentsPP_ContinentCount"
+		     DefaultValue="CONTINENTS_AUTO"
+		     ConfigurationGroup="Map"
+		     ConfigurationKey="ContinentsPP_ContinentCount"
+		     GroupId="ContinentsPP_Options"
+		     Hash="0"
+		     SupportsSinglePlayer="1"
+		     SupportsLANMultiplayer="1"
+		     SupportsInternetMultiplayer="1"
+		     SortIndex="30"/>
+	</Parameters>
+
+	<!-- Domain Values for Water Coverage (Higher % = More Water) -->
+	<DomainValues>
+		<Row Domain="ContinentsPP_WaterCoverage" Value="WATER_60" Name="LOC_WATER_60_NAME" Description="LOC_WATER_60_DESC" SortIndex="10"/>
+		<Row Domain="ContinentsPP_WaterCoverage" Value="WATER_65" Name="LOC_WATER_65_NAME" Description="LOC_WATER_65_DESC" SortIndex="20"/>
+		<Row Domain="ContinentsPP_WaterCoverage" Value="WATER_68" Name="LOC_WATER_68_NAME" Description="LOC_WATER_68_DESC" SortIndex="30"/>
+		<Row Domain="ContinentsPP_WaterCoverage" Value="WATER_72" Name="LOC_WATER_72_NAME" Description="LOC_WATER_72_DESC" SortIndex="40"/>
+		<Row Domain="ContinentsPP_WaterCoverage" Value="WATER_75" Name="LOC_WATER_75_NAME" Description="LOC_WATER_75_DESC" SortIndex="50"/>
+		<Row Domain="ContinentsPP_WaterCoverage" Value="WATER_80" Name="LOC_WATER_80_NAME" Description="LOC_WATER_80_DESC" SortIndex="60"/>
+	</DomainValues>
+
+	<!-- Domain Values for Erosion -->
+	<DomainValues>
+		<Row Domain="ContinentsPP_Erosion" Value="EROSION_LOW" Name="LOC_EROSION_LOW_NAME" Description="LOC_EROSION_LOW_DESC" SortIndex="10"/>
+		<Row Domain="ContinentsPP_Erosion" Value="EROSION_MEDIUM" Name="LOC_EROSION_MEDIUM_NAME" Description="LOC_EROSION_MEDIUM_DESC" SortIndex="20"/>
+		<Row Domain="ContinentsPP_Erosion" Value="EROSION_HIGH" Name="LOC_EROSION_HIGH_NAME" Description="LOC_EROSION_HIGH_DESC" SortIndex="30"/>
+	</DomainValues>
+
+	<!-- Domain Values for Continent Count -->
+	<DomainValues>
+		<Row Domain="ContinentsPP_ContinentCount" Value="CONTINENTS_AUTO" Name="LOC_CONTINENTS_AUTO_NAME" Description="LOC_CONTINENTS_AUTO_DESC" SortIndex="10"/>
+		<Row Domain="ContinentsPP_ContinentCount" Value="CONTINENTS_2" Name="LOC_CONTINENTS_2_NAME" Description="LOC_CONTINENTS_2_DESC" SortIndex="20"/>
+		<Row Domain="ContinentsPP_ContinentCount" Value="CONTINENTS_3" Name="LOC_CONTINENTS_3_NAME" Description="LOC_CONTINENTS_3_DESC" SortIndex="30"/>
+		<Row Domain="ContinentsPP_ContinentCount" Value="CONTINENTS_4" Name="LOC_CONTINENTS_4_NAME" Description="LOC_CONTINENTS_4_DESC" SortIndex="40"/>
+	</DomainValues>
+
+	<!-- Parameter Dependencies: Only show these options when Continents++ map is selected -->
+	<ParameterDependencies>
+		<Row ParameterId="ContinentsPP_WaterCoverage" ConfigurationGroup="Map" ConfigurationKey="Script" ConfigurationValue="{ContinentsPlusPlus}modules/maps/continents-plus-plus.js"/>
+		<Row ParameterId="ContinentsPP_Erosion" ConfigurationGroup="Map" ConfigurationKey="Script" ConfigurationValue="{ContinentsPlusPlus}modules/maps/continents-plus-plus.js"/>
+		<Row ParameterId="ContinentsPP_ContinentCount" ConfigurationGroup="Map" ConfigurationKey="Script" ConfigurationValue="{ContinentsPlusPlus}modules/maps/continents-plus-plus.js"/>
+	</ParameterDependencies>
+</Database>

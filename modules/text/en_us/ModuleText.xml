@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Database>
+	<EnglishText>
+		<Row Tag="LOC_CONTINENTS_PLUS_PLUS_NAME">
+			<Text>Continents++</Text>
+		</Row>
+		<Row Tag="LOC_CONTINENTS_PLUS_PLUS_DESCRIPTION">
+			<Text>Enhanced map generation with randomized Earth-like continents, fractal coastlines, and unique layouts every game</Text>
+		</Row>
+	</EnglishText>
+</Database>

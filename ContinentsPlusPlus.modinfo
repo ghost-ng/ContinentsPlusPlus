@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Mod id="ContinentsPlusPlus" version="1"
+	xmlns="ModInfo">
+	<Properties>
+		<Name>LOC_CONTINENTS_PLUS_PLUS_NAME</Name>
+		<Description>LOC_CONTINENTS_PLUS_PLUS_DESCRIPTION</Description>
+		<Authors>miguel</Authors>
+		<Package>MOD</Package>
+	</Properties>
+	<Dependencies>
+		<Mod id="base-standard" title="Base Standard"/>
+	</Dependencies>
+	<ActionCriteria>
+		<Criteria id="always">
+			<AlwaysMet></AlwaysMet>
+		</Criteria>
+	</ActionCriteria>
+	<ActionGroups>
+		<ActionGroup id="base-game-main-mapscript-template" scope="game" criteria="always">
+			<Actions>
+				<UpdateText>
+					<Item>modules/text/en_us/MapText.xml</Item>
+				</UpdateText>
+				<ImportFiles>
+					<Item>modules/maps/assign-starting-plots.js</Item>
+				</ImportFiles>
+			</Actions>
+		</ActionGroup>
+		<ActionGroup id="shell-mapscript-template" scope="shell" criteria="always">
+			<Actions>
+				<UpdateText>
+					<Item>modules/text/en_us/MapText.xml</Item>
+				</UpdateText>
+				<UpdateDatabase>
+					<Item>modules/config/config.xml</Item>
+				</UpdateDatabase>
+			</Actions>
+		</ActionGroup>
+	</ActionGroups>
+	<LocalizedText>
+		<File>modules/text/en_us/ModuleText.xml</File>
+		<File>modules/text/en_us/MapText.xml</File>
+	</LocalizedText>
+	<ScriptModules>
+		<Module path="modules/maps/assign-starting-plots.js" />
+		<Module path="modules/maps/continents-plus-plus.js" />
+    </ScriptModules>
+</Mod>

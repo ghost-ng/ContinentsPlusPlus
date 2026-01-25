@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Database>
+	<Maps>
+		<Row File="{ContinentsPlusPlus}modules/maps/continents-plus-plus.js" Name="Continents++" Description="LOC_CONTINENTS_PLUS_PLUS_DESCRIPTION" SortIndex="9"/>
+	</Maps>
+</Database>

@@ -1,0 +1,27 @@
+# Windows artifacts
+nul
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+*.sln.docstates
+
+# Claude Code
+.claude/
+
+# Node.js (map-preview-tool)
+node_modules/
+npm-debug.log*
+
+# OS files
+.DS_Store
+*.log
+
+# Backup files
+*.bak
+*.tmp
+*~
