@@ -99,6 +99,8 @@ const MAP_SIZE_CONFIGS = {
   // Index 0: TINY (2-4 players)
   0: {
     name: 'TINY',
+    // Total landmass size (lower = more water, ~65-70% water target)
+    totalLandmassSize: { min: 18, max: 24 },
     // Continent configuration
     continentSizeRatio: { min: 0.45, max: 0.60 },  // Larger continent gets 45-60%
     erosionPercent: { min: 2, max: 4 },            // Lower erosion on small maps
@@ -116,6 +118,7 @@ const MAP_SIZE_CONFIGS = {
   // Index 1: SMALL (4-6 players)
   1: {
     name: 'SMALL',
+    totalLandmassSize: { min: 22, max: 28 },
     continentSizeRatio: { min: 0.45, max: 0.58 },
     erosionPercent: { min: 3, max: 5 },
     coastalIslands: { min: 6, max: 12 },
@@ -129,6 +132,7 @@ const MAP_SIZE_CONFIGS = {
   // Index 2: STANDARD (6-8 players)
   2: {
     name: 'STANDARD',
+    totalLandmassSize: { min: 26, max: 34 },
     continentSizeRatio: { min: 0.48, max: 0.58 },
     erosionPercent: { min: 3, max: 6 },
     coastalIslands: { min: 8, max: 16 },
@@ -142,6 +146,7 @@ const MAP_SIZE_CONFIGS = {
   // Index 3: LARGE (8-10 players)
   3: {
     name: 'LARGE',
+    totalLandmassSize: { min: 32, max: 40 },
     continentSizeRatio: { min: 0.50, max: 0.60 },
     erosionPercent: { min: 4, max: 7 },
     coastalIslands: { min: 12, max: 20 },
@@ -155,6 +160,7 @@ const MAP_SIZE_CONFIGS = {
   // Index 4: HUGE (10-12 players)
   4: {
     name: 'HUGE',
+    totalLandmassSize: { min: 38, max: 48 },
     continentSizeRatio: { min: 0.52, max: 0.62 },
     erosionPercent: { min: 5, max: 8 },           // Higher erosion for coastline detail
     coastalIslands: { min: 14, max: 24 },
@@ -175,6 +181,12 @@ function generateRandomizedConfig(mapSizeIndex, randomSeed) {
   const baseConfig = MAP_SIZE_CONFIGS[mapSizeIndex] || MAP_SIZE_CONFIGS[2];
 
   console.log(`[ContinentsPP] Generating randomized config for ${baseConfig.name} map (seed: ${randomSeed})`);
+
+  // Randomize total landmass size (controls water percentage)
+  const totalLandmassSize = randomInt(random,
+    baseConfig.totalLandmassSize.min,
+    baseConfig.totalLandmassSize.max
+  );
 
   // Randomize continent size distribution
   // The larger continent gets between min-max of total land
@@ -226,6 +238,9 @@ function generateRandomizedConfig(mapSizeIndex, randomSeed) {
 
   const config = {
     mapSize: baseConfig.name,
+
+    // Total landmass size (controls overall land vs water ratio)
+    totalLandmassSize: totalLandmassSize,
 
     // Continent sizes (as ratios of total land)
     continentRatios: largerContinentIndex === 0
@@ -280,6 +295,7 @@ function generateRandomizedConfig(mapSizeIndex, randomSeed) {
   };
 
   // Log the randomized configuration
+  console.log(`[ContinentsPP] Total landmass size: ${config.totalLandmassSize}`);
   console.log(`[ContinentsPP] Continent ratio: ${(config.continentRatios[0] * 100).toFixed(1)}% / ${(config.continentRatios[1] * 100).toFixed(1)}%`);
   console.log(`[ContinentsPP] Erosion: ${config.landmass[0].erosionPercent}% / ${config.landmass[1].erosionPercent}%`);
   console.log(`[ContinentsPP] Coastal islands: ${config.landmass[0].coastalIslands} / ${config.landmass[1].coastalIslands}`);
@@ -319,6 +335,12 @@ function calculateHemisphereBounds(iWidth, iHeight) {
  * Called AFTER init() - only modifies safe properties
  */
 function applyRandomizedConfig(generatorSettings, config) {
+  // Apply total landmass size (controls water percentage)
+  if (config.totalLandmassSize) {
+    generatorSettings.totalLandmassSize = config.totalLandmassSize;
+    console.log(`[ContinentsPP] Set totalLandmassSize to ${config.totalLandmassSize}`);
+  }
+
   // Apply landmass configurations
   for (let i = 0; i < Math.min(2, generatorSettings.landmass.length); i++) {
     const landmass = generatorSettings.landmass[i];

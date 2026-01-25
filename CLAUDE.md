@@ -10,6 +10,7 @@ This is a **Civilization VII mod** called "Continents++" that implements realist
 
 - **Voronoi Plate Tectonics**: Uses `VoronoiContinents` class for realistic continental generation
 - **Randomized Parameters**: Each map generation produces unique configurations using seeded RNG
+- **Configurable Land Coverage**: `totalLandmassSize` controls water-to-land ratio
 - **Research-Backed Design**: Parameters based on fractal coastline theory, power-law distributions, and game balance research
 - **Map Size Scaling**: All parameters scale appropriately from Tiny to Huge maps
 - **Earth-like Distribution**: ~65-70% water coverage with asymmetric continent sizes
@@ -20,6 +21,7 @@ This is a **Civilization VII mod** called "Continents++" that implements realist
 ContinentsPlusPlus/
 ├── ContinentsPlusPlus.modinfo         # Mod configuration and module loading
 ├── CLAUDE.md                          # This documentation file
+├── .gitignore                         # Git ignore rules
 ├── modules/
 │   ├── config/
 │   │   ├── config.xml                 # Map database entry
@@ -50,13 +52,15 @@ The map generation uses a **randomized configuration system** that produces uniq
 2. **Map Size Configurations** (`MAP_SIZE_CONFIGS`):
    - Research-backed parameter ranges for each map size
    - Defines min/max values for randomization
+   - Includes `totalLandmassSize` to control water coverage
 
 3. **Randomized Config Generator** (`generateRandomizedConfig`):
    - Produces unique configuration each generation
-   - Randomizes: continent ratios, erosion, islands, mountains, volcanoes
+   - Randomizes: total landmass size, continent ratios, erosion, islands, mountains, volcanoes
 
 4. **Config Applier** (`applyRandomizedConfig`):
    - Safely modifies generator settings after init()
+   - Sets `totalLandmassSize` to control land/water ratio
    - Only touches properties that work post-initialization
 
 ### Voronoi System Constraints
@@ -65,6 +69,7 @@ The map generation uses a **randomized configuration system** that produces uniq
 
 | Property | Modifiable After init()? | Notes |
 |----------|-------------------------|-------|
+| `totalLandmassSize` | YES | Controls overall land coverage |
 | `landmass` array length | NO | Hardcoded to 2 landmasses |
 | `landmass[n].size` | NO | Calculated during init() |
 | `landmass[n].variance` | NO | Locked after init() |
@@ -87,13 +92,15 @@ Based on analysis of:
 
 #### Map Size Scaling
 
-| Map Size | Erosion % | Coastal Islands | Island Size | Mountain % |
-|----------|-----------|-----------------|-------------|------------|
-| TINY     | 2-4%      | 4-8             | 2.5-4.5     | 10-14%     |
-| SMALL    | 3-5%      | 6-12            | 3.5-5.5     | 10-15%     |
-| STANDARD | 3-6%      | 8-16            | 4.5-7.0     | 11-15%     |
-| LARGE    | 4-7%      | 12-20           | 5.5-8.5     | 11-16%     |
-| HUGE     | 5-8%      | 14-24           | 6.5-10.0    | 12-17%     |
+| Map Size | Landmass Size | Erosion % | Coastal Islands | Island Size | Mountain % |
+|----------|---------------|-----------|-----------------|-------------|------------|
+| TINY     | 18-24         | 2-4%      | 4-8             | 2.5-4.5     | 10-14%     |
+| SMALL    | 22-28         | 3-5%      | 6-12            | 3.5-5.5     | 10-15%     |
+| STANDARD | 26-34         | 3-6%      | 8-16            | 4.5-7.0     | 11-15%     |
+| LARGE    | 32-40         | 4-7%      | 12-20           | 5.5-8.5     | 11-16%     |
+| HUGE     | 38-48         | 5-8%      | 14-24           | 6.5-10.0    | 12-17%     |
+
+**Note**: Lower `Landmass Size` values = more water coverage. Target is ~65-70% water.
 
 #### Continent Size Distribution
 
@@ -106,7 +113,7 @@ Based on analysis of:
 1. **Initialization**: Get map parameters, player count, map seed
 2. **Random Config**: Generate randomized configuration using map seed
 3. **Voronoi Setup**: Create and initialize `VoronoiContinents`
-4. **Apply Config**: Modify safe properties with randomized values
+4. **Apply Config**: Set `totalLandmassSize` and other safe properties
 5. **Configure Rules**: Set polar distance via `RuleAvoidEdge`
 6. **Player Distribution**: Assign players proportionally to continents
 7. **Simulation**: Run `voronoiMap.simulate()`
@@ -130,7 +137,7 @@ The `ContinentsPlusPlus.modinfo` file defines:
 
 ### Database Configuration
 
-[config/config.xml](modules/config/config.xml) adds the map to selection menu:
+`modules/config/config.xml` adds the map to selection menu:
 ```xml
 <Row File="{ContinentsPlusPlus}modules/maps/continents-plus-plus.js"
      Name="Continents++"
@@ -162,14 +169,14 @@ From `/base-standard/maps/`:
 
 ## Localization
 
-Localization files in `text/en_us/`:
+Localization files in `modules/text/en_us/`:
 
 **ModuleText.xml** - Mod manager display:
 - `LOC_CONTINENTS_PLUS_PLUS_NAME`: "Continents++"
-- `LOC_CONTINENTS_PLUS_PLUS_DESCRIPTION`: Mod description
+- `LOC_CONTINENTS_PLUS_PLUS_DESCRIPTION`: Enhanced map generation description
 
-**MapText.xml** - In-game display:
-- Same tags as ModuleText (for consistency)
+**MapText.xml** - In-game map chooser display:
+- Same tags with more detailed description about unique maps, fractal coastlines, etc.
 
 ## Testing
 
@@ -178,8 +185,8 @@ Localization files in `text/en_us/`:
 1. **Load the mod** in Civilization VII Addons menu
 2. **Start new game** with "Continents++" map script
 3. **Check console logs** for:
-   - `CONTINENTS++ - Enhanced Voronoi Plate Tectonics Generation`
    - `[ContinentsPP] Generating randomized config for X map`
+   - `[ContinentsPP] Total landmass size: XX`
    - `[ContinentsPP] Continent ratio: XX.X% / XX.X%`
    - `[ContinentsPP] Land/Water: XX.X% land / XX.X% water`
 
@@ -189,11 +196,12 @@ Localization files in `text/en_us/`:
 - Organic, irregular coastlines (varied erosion)
 - Coastal islands near landmasses
 - Mid-ocean islands for naval gameplay
-- ~65-70% water coverage
+- ~65-70% water coverage (adjust `totalLandmassSize` if too much/little land)
 
 ### Multiple Generation Test
 
 Generate several maps with same settings to verify randomization:
+- Total landmass size should vary within configured range
 - Continent size ratios should vary
 - Erosion levels should differ
 - Island counts should change
@@ -234,6 +242,28 @@ Uses **fertility-based method** (Civ VI algorithm):
 1. Empty `startSectors` array triggers fallback
 2. `StartPositioner.divideMapIntoMajorRegions()` creates regions
 3. Players assigned based on fertility and start biases
+
+## Tuning Guide
+
+### Adjusting Water Coverage
+
+To increase water (less land):
+- Decrease `totalLandmassSize` min/max values in `MAP_SIZE_CONFIGS`
+- Current values target ~65-70% water
+
+To decrease water (more land):
+- Increase `totalLandmassSize` min/max values
+
+### Adjusting Coastline Complexity
+
+- Higher `erosionPercent` = more irregular coastlines
+- Lower `erosionPercent` = smoother coastlines
+
+### Adjusting Island Density
+
+- `coastalIslands`: Number of islands near continents
+- `islandTotalSize`: Mid-ocean island coverage
+- `islandVariance`: Size variation of islands
 
 ## Future Enhancements
 
