@@ -686,7 +686,7 @@ async function generateMap() {
                                        iStartSectorRows, iStartSectorCols, startSectors, playerDistributionMode);
 
   console.log("[ContinentsPP] Generating discoveries...");
-  generateDiscoveries(iWidth, iHeight, startPositions);
+  generateDiscoveries(iWidth, iHeight, startPositions, globals.g_PolarWaterRows);
   dumpResources(iWidth, iHeight);
 
   FertilityBuilder.recalculate();
