@@ -5,11 +5,10 @@
  * with research-backed parameters for fantasy world map making.
  *
  * Key Features:
- * - 2 major continents with asymmetric sizes (Earth-like distribution)
- * - Strategic island placement for "pseudo-continents"
+ * - 3-5 major continents (configurable via UnifiedContinentsBase)
+ * - ~71% water coverage (Earth-like)
  * - Randomized parameters for unique maps each generation
  * - Map size scaling for appropriate detail levels
- * - ~65-70% water coverage (Earth-like)
  *
  * Research basis:
  * - Fractal coastline theory (target dimension ~1.25-1.33)
@@ -21,10 +20,11 @@
 
 console.log("Generating using script Continents++ (Voronoi Edition)");
 
-// Voronoi plate tectonics system
-import { VoronoiContinents } from '/base-standard/scripts/voronoi_maps/continents.js';
+// Voronoi plate tectonics system - using UnifiedContinentsBase for dynamic landmass count
+import { UnifiedContinentsBase } from '/base-standard/scripts/voronoi_maps/unified-continents-base.js';
 import { RuleAvoidEdge } from '/base-standard/scripts/voronoi_rules/avoid-edge.js';
-import { kdTree, TerrainType } from '/base-standard/scripts/kd-tree.js';
+import { kdTree, TerrainType, WrapType } from '/base-standard/scripts/kd-tree.js';
+import { GeneratorType } from '/base-standard/scripts/voronoi_generators/map-generator.js';
 
 // Starting position assignment
 import { assignStartPositions, chooseStartSectors } from '/ContinentsPlusPlus/modules/maps/assign-starting-plots.js';
@@ -97,19 +97,18 @@ function randomChoice(random, array) {
  */
 const MAP_SIZE_CONFIGS = {
   // Index 0: TINY (2-4 players)
+  // Target: ~71% water (Earth-like), multiple continents
   0: {
     name: 'TINY',
-    // Total landmass size (lower = more water, ~65-70% water target)
-    totalLandmassSize: { min: 18, max: 24 },
-    // Continent configuration
-    continentSizeRatio: { min: 0.45, max: 0.60 },  // Larger continent gets 45-60%
-    erosionPercent: { min: 2, max: 4 },            // Lower erosion on small maps
+    landmassCount: { min: 3, max: 4 },            // 3-4 continents
+    totalLandmassSize: { min: 20, max: 26 },      // ~29% land (71% water)
+    erosionPercent: { min: 6, max: 10 },
     // Coastal islands (near continents)
     coastalIslands: { min: 4, max: 8 },
-    coastalIslandSize: { min: 0.8, max: 1.2 },
-    // Ocean islands (strategic mid-ocean)
-    islandTotalSize: { min: 2.5, max: 4.5 },
-    islandVariance: { min: 0.5, max: 1.5 },
+    coastalIslandSize: { min: 1.0, max: 1.6 },
+    // Ocean islands
+    islandTotalSize: { min: 2, max: 4 },
+    islandVariance: { min: 1, max: 2 },
     // Terrain
     mountainPercent: { min: 10, max: 14 },
     mountainRandomize: { min: 25, max: 45 },
@@ -118,13 +117,13 @@ const MAP_SIZE_CONFIGS = {
   // Index 1: SMALL (4-6 players)
   1: {
     name: 'SMALL',
+    landmassCount: { min: 3, max: 5 },
     totalLandmassSize: { min: 22, max: 28 },
-    continentSizeRatio: { min: 0.45, max: 0.58 },
-    erosionPercent: { min: 3, max: 5 },
-    coastalIslands: { min: 6, max: 12 },
-    coastalIslandSize: { min: 0.8, max: 1.4 },
-    islandTotalSize: { min: 3.5, max: 5.5 },
-    islandVariance: { min: 0.8, max: 1.8 },
+    erosionPercent: { min: 8, max: 12 },
+    coastalIslands: { min: 6, max: 10 },
+    coastalIslandSize: { min: 1.2, max: 1.8 },
+    islandTotalSize: { min: 3, max: 5 },
+    islandVariance: { min: 1.5, max: 3 },
     mountainPercent: { min: 10, max: 15 },
     mountainRandomize: { min: 25, max: 45 },
   },
@@ -132,13 +131,13 @@ const MAP_SIZE_CONFIGS = {
   // Index 2: STANDARD (6-8 players)
   2: {
     name: 'STANDARD',
-    totalLandmassSize: { min: 26, max: 34 },
-    continentSizeRatio: { min: 0.48, max: 0.58 },
-    erosionPercent: { min: 3, max: 6 },
-    coastalIslands: { min: 8, max: 16 },
-    coastalIslandSize: { min: 0.9, max: 1.6 },
-    islandTotalSize: { min: 4.5, max: 7.0 },
-    islandVariance: { min: 1.0, max: 2.0 },
+    landmassCount: { min: 4, max: 5 },
+    totalLandmassSize: { min: 24, max: 30 },
+    erosionPercent: { min: 10, max: 14 },
+    coastalIslands: { min: 8, max: 14 },
+    coastalIslandSize: { min: 1.4, max: 2.0 },
+    islandTotalSize: { min: 4, max: 7 },
+    islandVariance: { min: 2, max: 4 },
     mountainPercent: { min: 11, max: 15 },
     mountainRandomize: { min: 30, max: 50 },
   },
@@ -146,13 +145,13 @@ const MAP_SIZE_CONFIGS = {
   // Index 3: LARGE (8-10 players)
   3: {
     name: 'LARGE',
-    totalLandmassSize: { min: 32, max: 40 },
-    continentSizeRatio: { min: 0.50, max: 0.60 },
-    erosionPercent: { min: 4, max: 7 },
-    coastalIslands: { min: 12, max: 20 },
-    coastalIslandSize: { min: 1.0, max: 1.8 },
-    islandTotalSize: { min: 5.5, max: 8.5 },
-    islandVariance: { min: 1.2, max: 2.5 },
+    landmassCount: { min: 4, max: 6 },
+    totalLandmassSize: { min: 26, max: 34 },
+    erosionPercent: { min: 12, max: 16 },
+    coastalIslands: { min: 10, max: 18 },
+    coastalIslandSize: { min: 1.6, max: 2.2 },
+    islandTotalSize: { min: 5, max: 9 },
+    islandVariance: { min: 2.5, max: 5 },
     mountainPercent: { min: 11, max: 16 },
     mountainRandomize: { min: 30, max: 50 },
   },
@@ -160,13 +159,13 @@ const MAP_SIZE_CONFIGS = {
   // Index 4: HUGE (10-12 players)
   4: {
     name: 'HUGE',
-    totalLandmassSize: { min: 38, max: 48 },
-    continentSizeRatio: { min: 0.52, max: 0.62 },
-    erosionPercent: { min: 5, max: 8 },           // Higher erosion for coastline detail
-    coastalIslands: { min: 14, max: 24 },
-    coastalIslandSize: { min: 1.0, max: 2.0 },
-    islandTotalSize: { min: 6.5, max: 10.0 },
-    islandVariance: { min: 1.5, max: 3.0 },
+    landmassCount: { min: 5, max: 7 },
+    totalLandmassSize: { min: 28, max: 38 },
+    erosionPercent: { min: 14, max: 18 },
+    coastalIslands: { min: 14, max: 22 },
+    coastalIslandSize: { min: 1.8, max: 2.6 },
+    islandTotalSize: { min: 6, max: 12 },
+    islandVariance: { min: 3, max: 6 },
     mountainPercent: { min: 12, max: 17 },
     mountainRandomize: { min: 30, max: 55 },
   }
@@ -182,32 +181,16 @@ function generateRandomizedConfig(mapSizeIndex, randomSeed) {
 
   console.log(`[ContinentsPP] Generating randomized config for ${baseConfig.name} map (seed: ${randomSeed})`);
 
+  // Randomize number of continents
+  const landmassCount = randomInt(random,
+    baseConfig.landmassCount.min,
+    baseConfig.landmassCount.max
+  );
+
   // Randomize total landmass size (controls water percentage)
   const totalLandmassSize = randomInt(random,
     baseConfig.totalLandmassSize.min,
     baseConfig.totalLandmassSize.max
-  );
-
-  // Randomize continent size distribution
-  // The larger continent gets between min-max of total land
-  const largerContinentRatio = randomRange(random,
-    baseConfig.continentSizeRatio.min,
-    baseConfig.continentSizeRatio.max
-  );
-  const smallerContinentRatio = 1.0 - largerContinentRatio;
-
-  // Randomly decide which continent (0 or 1) is larger
-  const largerContinentIndex = random() > 0.5 ? 0 : 1;
-
-  // Randomize erosion (coastline complexity)
-  const erosion0 = randomInt(random, baseConfig.erosionPercent.min, baseConfig.erosionPercent.max);
-  const erosion1 = randomInt(random, baseConfig.erosionPercent.min, baseConfig.erosionPercent.max);
-
-  // Randomize coastal islands
-  const coastalIslands0 = randomInt(random, baseConfig.coastalIslands.min, baseConfig.coastalIslands.max);
-  const coastalIslands1 = randomInt(random,
-    Math.floor(baseConfig.coastalIslands.min * 0.7),  // Smaller continent gets fewer
-    Math.floor(baseConfig.coastalIslands.max * 0.9)
   );
 
   // Randomize coastal island size
@@ -236,42 +219,39 @@ function generateRandomizedConfig(mapSizeIndex, randomSeed) {
     baseConfig.mountainRandomize.max
   );
 
+  // Generate landmass configurations for each continent
+  const landmassConfigs = [];
+  for (let i = 0; i < landmassCount; i++) {
+    const erosion = randomInt(random, baseConfig.erosionPercent.min, baseConfig.erosionPercent.max);
+    const coastalIslands = randomInt(random, baseConfig.coastalIslands.min, baseConfig.coastalIslands.max);
+
+    landmassConfigs.push({
+      erosionPercent: erosion,
+      coastalIslands: coastalIslands,
+      coastalIslandsSize: coastalIslandSize * (0.8 + random() * 0.4),  // Slight variation
+      coastalIslandsSizeVariance: 0.5,
+      coastalIslandsMinDistance: 2,
+      coastalIslandsMaxDistance: 3 + mapSizeIndex,
+    });
+  }
+
   const config = {
     mapSize: baseConfig.name,
+
+    // Number of continents (dynamic!)
+    landmassCount: landmassCount,
 
     // Total landmass size (controls overall land vs water ratio)
     totalLandmassSize: totalLandmassSize,
 
-    // Continent sizes (as ratios of total land)
-    continentRatios: largerContinentIndex === 0
-      ? [largerContinentRatio, smallerContinentRatio]
-      : [smallerContinentRatio, largerContinentRatio],
-
-    // Landmass configurations
-    landmass: [
-      {
-        erosionPercent: erosion0,
-        coastalIslands: largerContinentIndex === 0 ? coastalIslands0 : coastalIslands1,
-        coastalIslandsSize: coastalIslandSize,
-        coastalIslandsSizeVariance: 0.5,
-        coastalIslandsMinDistance: 2,
-        coastalIslandsMaxDistance: 3 + mapSizeIndex,  // Scale with map size
-      },
-      {
-        erosionPercent: erosion1,
-        coastalIslands: largerContinentIndex === 1 ? coastalIslands0 : coastalIslands1,
-        coastalIslandsSize: coastalIslandSize * 0.9,  // Slightly smaller on smaller continent
-        coastalIslandsSizeVariance: 0.5,
-        coastalIslandsMinDistance: 2,
-        coastalIslandsMaxDistance: 3 + mapSizeIndex,
-      }
-    ],
+    // Landmass configurations (one per continent)
+    landmass: landmassConfigs,
 
     // Island configuration (mid-ocean)
     island: {
       totalSize: islandTotalSize,
       variance: islandVariance,
-      meridianDistance: 2 + mapSizeIndex,      // Scale spacing with map size
+      meridianDistance: 2 + mapSizeIndex,
       landmassDistance: 4 + mapSizeIndex,
       islandDistance: 2 + Math.floor(mapSizeIndex / 2),
       erosionPercent: Math.min(15, 10 + mapSizeIndex * 2),
@@ -295,10 +275,10 @@ function generateRandomizedConfig(mapSizeIndex, randomSeed) {
   };
 
   // Log the randomized configuration
+  console.log(`[ContinentsPP] Landmass count: ${config.landmassCount}`);
   console.log(`[ContinentsPP] Total landmass size: ${config.totalLandmassSize}`);
-  console.log(`[ContinentsPP] Continent ratio: ${(config.continentRatios[0] * 100).toFixed(1)}% / ${(config.continentRatios[1] * 100).toFixed(1)}%`);
-  console.log(`[ContinentsPP] Erosion: ${config.landmass[0].erosionPercent}% / ${config.landmass[1].erosionPercent}%`);
-  console.log(`[ContinentsPP] Coastal islands: ${config.landmass[0].coastalIslands} / ${config.landmass[1].coastalIslands}`);
+  console.log(`[ContinentsPP] Erosion per continent: ${config.landmass.map(l => l.erosionPercent + '%').join(', ')}`);
+  console.log(`[ContinentsPP] Coastal islands per continent: ${config.landmass.map(l => l.coastalIslands).join(', ')}`);
   console.log(`[ContinentsPP] Mid-ocean islands: size=${config.island.totalSize.toFixed(1)}, variance=${config.island.variance.toFixed(1)}`);
   console.log(`[ContinentsPP] Mountains: ${config.mountain.percent}% (randomize: ${config.mountain.randomize})`);
 
@@ -332,27 +312,25 @@ function calculateHemisphereBounds(iWidth, iHeight) {
 
 /**
  * Applies randomized configuration to generator settings
- * Called AFTER init() - only modifies safe properties
+ * Called AFTER init() - modifies individual landmass properties but NOT array length
+ * (landmassCount and totalLandmassSize must be set in m_settings BEFORE init())
  */
 function applyRandomizedConfig(generatorSettings, config) {
-  // Apply total landmass size (controls water percentage)
-  if (config.totalLandmassSize) {
-    generatorSettings.totalLandmassSize = config.totalLandmassSize;
-    console.log(`[ContinentsPP] Set totalLandmassSize to ${config.totalLandmassSize}`);
-  }
+  // Modify individual landmass properties (array was created by applySettings in init)
+  // DO NOT replace the array - applySettings() calculated proper sizes we need to keep
+  const landmassCount = generatorSettings.landmass.length;
+  console.log(`[ContinentsPP] Configuring ${landmassCount} landmasses`);
 
-  // Apply landmass configurations
-  for (let i = 0; i < Math.min(2, generatorSettings.landmass.length); i++) {
-    const landmass = generatorSettings.landmass[i];
-    const configLandmass = config.landmass[i];
-
-    // These properties CAN be modified after init()
-    landmass.erosionPercent = configLandmass.erosionPercent;
-    landmass.coastalIslands = configLandmass.coastalIslands;
-    landmass.coastalIslandsSize = configLandmass.coastalIslandsSize;
-    landmass.coastalIslandsSizeVariance = configLandmass.coastalIslandsSizeVariance;
-    landmass.coastalIslandsMinDistance = configLandmass.coastalIslandsMinDistance;
-    landmass.coastalIslandsMaxDistance = configLandmass.coastalIslandsMaxDistance;
+  for (let i = 0; i < landmassCount; i++) {
+    const landmassConfig = config.landmass[i] || config.landmass[0];  // Fallback to first if fewer configs
+    generatorSettings.landmass[i].erosionPercent = landmassConfig.erosionPercent;
+    generatorSettings.landmass[i].coastalIslands = landmassConfig.coastalIslands;
+    generatorSettings.landmass[i].coastalIslandsSize = landmassConfig.coastalIslandsSize;
+    generatorSettings.landmass[i].coastalIslandsSizeVariance = landmassConfig.coastalIslandsSizeVariance;
+    generatorSettings.landmass[i].coastalIslandsMinDistance = landmassConfig.coastalIslandsMinDistance;
+    generatorSettings.landmass[i].coastalIslandsMaxDistance = landmassConfig.coastalIslandsMaxDistance;
+    // Note: size, variance, spawnCenterDistance are calculated by applySettings() - don't override!
+    console.log(`[ContinentsPP] Landmass ${i+1}: erosion=${landmassConfig.erosionPercent}%, islands=${landmassConfig.coastalIslands}`);
   }
 
   // Apply island configuration
@@ -445,14 +423,79 @@ async function generateMap() {
   //────────────────────────────────────────────────────────────────────────────
 
   console.log("[ContinentsPP] Initializing Voronoi plate tectonics simulation...");
-  const voronoiMap = new VoronoiContinents();
+  console.log(`[ContinentsPP] Using UnifiedContinentsBase for ${randomConfig.landmassCount} continents`);
 
-  // Initialize with map size (creates generator with default settings)
-  voronoiMap.init(mapSizeIndex);
-  console.log("[ContinentsPP] Voronoi generator initialized");
+  // Create default generator settings (similar to continentSettings in base game)
+  // These get merged with UnifiedContinentsBase's applySettings() calculations
+  const defaultGeneratorSettings = {
+    generatorKey: 0,
+    mapConfig: {},
+    generatorConfig: {
+      plate: {
+        plateRotationMultiple: 5
+      },
+      landmass: [
+        // Template - will be replaced by applySettings based on landmassCount
+        { variance: 2, erosionPercent: 4, coastalIslands: 12 }
+      ],
+      island: {
+        totalSize: randomConfig.island.totalSize,
+        variance: randomConfig.island.variance,
+        meridianDistance: randomConfig.island.meridianDistance,
+        landmassDistance: randomConfig.island.landmassDistance,
+        erosionPercent: randomConfig.island.erosionPercent
+      },
+      mountain: {
+        percent: randomConfig.mountain.percent,
+        randomize: randomConfig.mountain.randomize
+      },
+      volcano: {
+        percent: randomConfig.volcano.percent,
+        variance: randomConfig.volcano.variance,
+        randomize: randomConfig.volcano.randomize
+      }
+    },
+    rulesConfig: {}
+  };
 
-  // Get generator settings and apply our randomized configuration
+  const voronoiMap = new UnifiedContinentsBase();
+
+  // Set m_settings BEFORE initInternal() - applySettings() reads these during init
+  try {
+    const voronoiSettings = voronoiMap.getSettings();
+    console.log(`[ContinentsPP] Default settings: landmassCount=${voronoiSettings.landmassCount}, totalLandmassSize=${voronoiSettings.totalLandmassSize}`);
+
+    voronoiSettings.landmassCount = randomConfig.landmassCount;
+    voronoiSettings.totalLandmassSize = randomConfig.totalLandmassSize;
+    console.log(`[ContinentsPP] Modified settings: landmassCount=${voronoiSettings.landmassCount}, totalLandmassSize=${voronoiSettings.totalLandmassSize}`);
+  } catch (e) {
+    console.log(`[ContinentsPP] Warning: Could not modify pre-init settings: ${e.message}`);
+  }
+
+  // Initialize with map size using initInternal (UnifiedContinentsBase doesn't have init())
+  try {
+    const cellCountMultiple = 1;  // Standard density
+    const relaxationSteps = 3;    // Standard relaxation
+    const wrapType = WrapType.WrapX;  // Wrap around meridian (cylindrical map)
+
+    voronoiMap.initInternal(
+      mapSizeIndex,
+      GeneratorType.Continent,
+      defaultGeneratorSettings,
+      cellCountMultiple,
+      relaxationSteps,
+      wrapType
+    );
+    console.log("[ContinentsPP] Voronoi generator initialized successfully");
+  } catch (e) {
+    console.log(`[ContinentsPP] ERROR during initInternal: ${e.message}`);
+    console.log(`[ContinentsPP] Stack: ${e.stack}`);
+    throw e;
+  }
+
+  // Get generator settings and apply our randomized configuration (erosion, islands, etc.)
   const generatorSettings = voronoiMap.getGenerator().getSettings();
+  console.log(`[ContinentsPP] Post-init landmass count: ${generatorSettings.landmass.length}`);
   applyRandomizedConfig(generatorSettings, randomConfig);
 
   // Configure pole distance rule (keep land away from poles)
@@ -465,30 +508,28 @@ async function generateMap() {
     }
   }
 
-  // Distribute players across continents proportionally
-  let iActualPlayers1 = iNumPlayers1;
-  let iActualPlayers2 = iNumPlayers2;
+  // Distribute players across continents evenly
+  const landmassCount = generatorSettings.landmass.length;
+  const playersPerContinent = Math.floor(iTotalPlayers / landmassCount);
+  let remainingPlayers = iTotalPlayers % landmassCount;
 
-  if (iTotalPlayers != iNumPlayers1 + iNumPlayers2) {
-    // Distribute based on continent size ratios
-    const ratio1 = randomConfig.continentRatios[0];
-    iActualPlayers1 = Math.max(1, Math.round(iTotalPlayers * ratio1));
-    iActualPlayers2 = iTotalPlayers - iActualPlayers1;
+  for (let i = 0; i < landmassCount; i++) {
+    // Distribute remaining players to first continents
+    const extraPlayer = remainingPlayers > 0 ? 1 : 0;
+    if (remainingPlayers > 0) remainingPlayers--;
 
-    // Ensure at least 1 player per continent if we have enough players
-    if (iTotalPlayers >= 2 && iActualPlayers2 < 1) {
-      iActualPlayers2 = 1;
-      iActualPlayers1 = iTotalPlayers - 1;
-    }
+    generatorSettings.landmass[i].playerAreas = playersPerContinent + extraPlayer;
   }
 
-  // Set player areas on landmasses
-  if (generatorSettings.landmass.length >= 2) {
-    generatorSettings.landmass[0].playerAreas = iActualPlayers1;
-    generatorSettings.landmass[1].playerAreas = iActualPlayers2;
-  }
+  const playerDistribution = generatorSettings.landmass.map((l, i) => `C${i+1}: ${l.playerAreas}`).join(', ');
+  console.log(`[ContinentsPP] Player distribution: ${playerDistribution}`);
 
-  console.log(`[ContinentsPP] Player distribution: Continent 1: ${iActualPlayers1}, Continent 2: ${iActualPlayers2}`);
+  // Calculate players per hemisphere for resource/start position APIs
+  // Split evenly (base game expects west/east hemisphere player counts)
+  const iActualPlayers1 = Math.ceil(iTotalPlayers / 2);
+  const iActualPlayers2 = iTotalPlayers - iActualPlayers1;
+  console.log(`[ContinentsPP] Hemisphere distribution: West=${iActualPlayers1}, East=${iActualPlayers2}`);
+
   console.log("[ContinentsPP] Running Voronoi simulation...");
 
   voronoiMap.simulate();
