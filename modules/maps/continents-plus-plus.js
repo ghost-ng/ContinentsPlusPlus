@@ -573,15 +573,17 @@ async function generateMap() {
           TerrainBuilder.addPlotTag(x, y, PlotTags.PLOT_TAG_ISLAND);
         }
       } else {
-        // Water tiles
-        const type = tile.terrainType === TerrainType.Coast ? globals.g_CoastTerrain : globals.g_OceanTerrain;
+        // Water tiles - Ocean is deep water, everything else is shallow/coastal
+        // Base game logic: Ocean → OceanTerrain, else → CoastTerrain
+        const type = tile.terrainType === TerrainType.Ocean ? globals.g_OceanTerrain : globals.g_CoastTerrain;
         TerrainBuilder.setTerrainType(x, y, type);
         waterTiles++;
 
         // Set landmass region for coast tiles (helps resource distribution near coasts)
-        if (tile.terrainType === TerrainType.Coast) {
+        // Check if NOT deep ocean (shallow water near land)
+        if (tile.terrainType !== TerrainType.Ocean) {
           const landmassTile = landmassKdTree.search(tile.pos);
-          const nearbyLandmassId = landmassTile?.data.landmassId ?? -1;
+          const nearbyLandmassId = landmassTile?.data?.landmassId ?? -1;
           if (nearbyLandmassId === 1) {
             TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_WEST);
           } else if (nearbyLandmassId === 2) {
@@ -629,31 +631,8 @@ async function generateMap() {
   TerrainBuilder.addFloodplains(4, 10);
   addFeatures(iWidth, iHeight);
   TerrainBuilder.validateAndFixTerrain();
-  utilities.adjustOceanPlotTags(iNumPlayers1 > iNumPlayers2);
 
-  // Tag coastal plots using hemisphere boundaries
-  for (let iY = 0; iY < iHeight; iY++) {
-    for (let iX = 0; iX < iWidth; iX++) {
-      let terrain = GameplayMap.getTerrainType(iX, iY);
-      if (terrain === globals.g_CoastTerrain) {
-        TerrainBuilder.setPlotTag(iX, iY, PlotTags.PLOT_TAG_WATER);
-        if (iActualPlayers1 > iActualPlayers2) {
-          if (iX < hemispheres.west.west - 2) {
-            TerrainBuilder.addPlotTag(iX, iY, PlotTags.PLOT_TAG_EAST_WATER);
-          } else {
-            TerrainBuilder.addPlotTag(iX, iY, PlotTags.PLOT_TAG_WEST_WATER);
-          }
-        } else {
-          if (iX > hemispheres.east.east + 2) {
-            TerrainBuilder.addPlotTag(iX, iY, PlotTags.PLOT_TAG_WEST_WATER);
-          } else {
-            TerrainBuilder.addPlotTag(iX, iY, PlotTags.PLOT_TAG_EAST_WATER);
-          }
-        }
-      }
-    }
-  }
-
+  // Recalculate areas and store water data (matching base game flow)
   AreaBuilder.recalculateAreas();
   TerrainBuilder.storeWaterData();
 
