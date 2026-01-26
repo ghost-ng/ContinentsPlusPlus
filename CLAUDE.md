@@ -4,16 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **Civilization VII mod** called "Continents++" that implements realistic map generation using **Voronoi plate tectonics simulation** with **research-backed parameters** from fantasy cartography and game design theory.
+This is a **Civilization VII mod** called "Continents++" that implements realistic map generation using **Voronoi plate tectonics simulation** with dynamic multi-continent support.
 
 ### Key Features
 
-- **Voronoi Plate Tectonics**: Uses `VoronoiContinents` class for realistic continental generation
-- **Randomized Parameters**: Each map generation produces unique configurations using seeded RNG
-- **Configurable Land Coverage**: `totalLandmassSize` controls water-to-land ratio
-- **Research-Backed Design**: Parameters based on fractal coastline theory, power-law distributions, and game balance research
+- **3-7 Dynamic Continents**: Uses `UnifiedContinentsBase` for variable landmass count based on map size
+- **Randomized Parameters**: Each map uses seeded RNG for unique but reproducible configurations
+- **Earth-like Water Coverage**: Targets ~65-70% water with asymmetric continent sizes
+- **Organic Coastlines**: Fractal erosion creates natural-looking shores and bays
+- **Scattered Archipelagos**: Mid-ocean islands and coastal island chains
 - **Map Size Scaling**: All parameters scale appropriately from Tiny to Huge maps
-- **Earth-like Distribution**: ~65-70% water coverage with asymmetric continent sizes
 
 ## Project Structure
 
@@ -21,11 +21,12 @@ This is a **Civilization VII mod** called "Continents++" that implements realist
 ContinentsPlusPlus/
 ├── ContinentsPlusPlus.modinfo         # Mod configuration and module loading
 ├── CLAUDE.md                          # This documentation file
+├── README.md                          # User installation/usage guide
 ├── .gitignore                         # Git ignore rules
 ├── modules/
 │   ├── config/
 │   │   ├── config.xml                 # Map database entry
-│   │   └── MapParameters.xml          # UI parameter definitions (unused)
+│   │   └── MapParameters.xml          # UI parameter definitions (future use)
 │   ├── maps/
 │   │   ├── continents-plus-plus.js    # Main map generation script
 │   │   └── assign-starting-plots.js   # Player starting position logic
@@ -38,88 +39,92 @@ ContinentsPlusPlus/
 
 ## Core Architecture
 
-### Enhanced Map Generation System
+### UnifiedContinentsBase System
 
-The map generation uses a **randomized configuration system** that produces unique but balanced maps each generation.
+The mod uses `UnifiedContinentsBase` instead of the default `VoronoiContinents` class. This enables:
 
-#### Key Components:
+- **Dynamic landmass count** (3-7 continents vs fixed 2)
+- **Configurable total land size** via `m_settings.totalLandmassSize`
+- **Proper size calculations** via `applySettings()` method
 
-1. **Seeded Random Number Generator** (`createSeededRandom`):
-   - Uses mulberry32 algorithm for deterministic randomization
-   - Same map seed produces identical parameters (reproducible)
-   - Different seeds produce varied terrain configurations
+#### Key Imports
 
-2. **Map Size Configurations** (`MAP_SIZE_CONFIGS`):
-   - Research-backed parameter ranges for each map size
-   - Defines min/max values for randomization
-   - Includes `totalLandmassSize` to control water coverage
+```javascript
+import { UnifiedContinentsBase } from '/base-standard/scripts/voronoi_maps/unified-continents-base.js';
+import { kdTree, TerrainType, WrapType } from '/base-standard/scripts/kd-tree.js';
+import { GeneratorType } from '/base-standard/scripts/voronoi_generators/map-generator.js';
+import { RuleAvoidEdge } from '/base-standard/scripts/voronoi_rules/avoid-edge.js';
+```
 
-3. **Randomized Config Generator** (`generateRandomizedConfig`):
-   - Produces unique configuration each generation
-   - Randomizes: total landmass size, continent ratios, erosion, islands, mountains, volcanoes
+### Initialization Sequence
 
-4. **Config Applier** (`applyRandomizedConfig`):
-   - Safely modifies generator settings after init()
-   - Sets `totalLandmassSize` to control land/water ratio
-   - Only touches properties that work post-initialization
+**CRITICAL**: `UnifiedContinentsBase` does NOT have an `init()` method. Must use `initInternal()`:
+
+```javascript
+const voronoiMap = new UnifiedContinentsBase();
+
+// 1. Set m_settings BEFORE initInternal (applySettings reads these)
+const voronoiSettings = voronoiMap.getSettings();
+voronoiSettings.landmassCount = 4;        // Dynamic: 3-7 based on map size
+voronoiSettings.totalLandmassSize = 25;   // Controls water coverage
+
+// 2. Call initInternal with required parameters
+voronoiMap.initInternal(
+  mapSizeIndex,           // Map size enum (0-4)
+  GeneratorType.Continent,
+  defaultGeneratorSettings,  // JSON config object
+  cellCountMultiple,      // Usually 1
+  relaxationSteps,        // Usually 3
+  WrapType.WrapX          // Cylindrical world
+);
+
+// 3. Get generator settings and modify post-init properties
+const generatorSettings = voronoiMap.getGenerator().getSettings();
+// Now safe to modify erosion, coastal islands, etc.
+```
 
 ### Voronoi System Constraints
 
-**CRITICAL**: The `VoronoiContinents` class has specific constraints:
+| Property | When to Set | Notes |
+|----------|-------------|-------|
+| `m_settings.landmassCount` | BEFORE initInternal | Controls number of continents |
+| `m_settings.totalLandmassSize` | BEFORE initInternal | Controls water coverage |
+| `landmass[n].size` | Set by applySettings | DO NOT override |
+| `landmass[n].variance` | Set by applySettings | DO NOT override |
+| `landmass[n].spawnCenterDistance` | Set by applySettings | DO NOT override |
+| `landmass[n].erosionPercent` | AFTER initInternal | Safe to modify |
+| `landmass[n].coastalIslands` | AFTER initInternal | Safe to modify |
+| `landmass[n].playerAreas` | AFTER initInternal | Safe to modify |
+| `island.*` | AFTER initInternal | All island settings safe |
+| `mountain.*` | AFTER initInternal | All mountain settings safe |
+| `volcano.*` | AFTER initInternal | All volcano settings safe |
 
-| Property | Modifiable After init()? | Notes |
-|----------|-------------------------|-------|
-| `totalLandmassSize` | YES | Controls overall land coverage |
-| `landmass` array length | NO | Hardcoded to 2 landmasses |
-| `landmass[n].size` | NO | Calculated during init() |
-| `landmass[n].variance` | NO | Locked after init() |
-| `landmass[n].playerAreas` | YES | Safe to modify |
-| `landmass[n].erosionPercent` | YES | Safe to modify |
-| `landmass[n].coastalIslands` | YES | Safe to modify |
-| `landmass[n].coastalIslandsSize` | YES | Safe to modify |
-| `island.*` | YES | All island settings safe |
-| `mountain.*` | YES | All mountain settings safe |
-| `volcano.*` | YES | All volcano settings safe |
-| Rules (`getRules()`) | YES | Can modify rule weights/configs |
+### Map Size Configuration
 
-### Research-Backed Parameters
-
-Based on analysis of:
-- **Fractal coastline theory** (target dimension ~1.25-1.33)
-- **Power-law island distributions** (many small, few large)
-- **Game balance research** (player distribution, resource fairness)
-- **Earth's continental distribution** (asymmetric sizes)
-
-#### Map Size Scaling
-
-| Map Size | Landmass Size | Erosion % | Coastal Islands | Island Size | Mountain % |
-|----------|---------------|-----------|-----------------|-------------|------------|
-| TINY     | 18-24         | 2-4%      | 4-8             | 2.5-4.5     | 10-14%     |
-| SMALL    | 22-28         | 3-5%      | 6-12            | 3.5-5.5     | 10-15%     |
-| STANDARD | 26-34         | 3-6%      | 8-16            | 4.5-7.0     | 11-15%     |
-| LARGE    | 32-40         | 4-7%      | 12-20           | 5.5-8.5     | 11-16%     |
-| HUGE     | 38-48         | 5-8%      | 14-24           | 6.5-10.0    | 12-17%     |
-
-**Note**: Lower `Landmass Size` values = more water coverage. Target is ~65-70% water.
-
-#### Continent Size Distribution
-
-- Larger continent: 45-62% of total land (varies by map size)
-- Smaller continent: 38-55% of total land
-- Which continent is larger is randomized each generation
+```javascript
+const MAP_SIZE_CONFIGS = {
+  0: { name: 'TINY',     landmassCount: { min: 3, max: 4 }, totalLandmassSize: { min: 20, max: 26 } },
+  1: { name: 'SMALL',    landmassCount: { min: 3, max: 5 }, totalLandmassSize: { min: 22, max: 28 } },
+  2: { name: 'STANDARD', landmassCount: { min: 4, max: 5 }, totalLandmassSize: { min: 24, max: 30 } },
+  3: { name: 'LARGE',    landmassCount: { min: 4, max: 6 }, totalLandmassSize: { min: 26, max: 34 } },
+  4: { name: 'HUGE',     landmassCount: { min: 5, max: 7 }, totalLandmassSize: { min: 28, max: 38 } }
+};
+```
 
 ### Map Generation Flow
 
 1. **Initialization**: Get map parameters, player count, map seed
 2. **Random Config**: Generate randomized configuration using map seed
-3. **Voronoi Setup**: Create and initialize `VoronoiContinents`
-4. **Apply Config**: Set `totalLandmassSize` and other safe properties
-5. **Configure Rules**: Set polar distance via `RuleAvoidEdge`
-6. **Player Distribution**: Assign players proportionally to continents
-7. **Simulation**: Run `voronoiMap.simulate()`
-8. **Terrain Application**: Convert Voronoi tiles to terrain types
-9. **Standard Processing**: Mountains, volcanoes, lakes, rivers, biomes
-10. **Resources & Starts**: Generate resources, assign starting positions
+3. **Create Voronoi**: Instantiate `UnifiedContinentsBase`
+4. **Set Pre-Init Settings**: Configure `landmassCount` and `totalLandmassSize` in `m_settings`
+5. **Initialize**: Call `initInternal()` with generator settings
+6. **Apply Post-Init Config**: Set erosion, coastal islands, mountains, volcanoes
+7. **Configure Rules**: Set polar distance via `RuleAvoidEdge`
+8. **Player Distribution**: Assign players evenly across continents
+9. **Simulation**: Run `voronoiMap.simulate()`
+10. **Terrain Application**: Convert Voronoi tiles to terrain types
+11. **Standard Processing**: Mountains, volcanoes, lakes, rivers, biomes
+12. **Resources & Starts**: Generate resources, assign starting positions
 
 ## Module Configuration
 
@@ -147,12 +152,14 @@ The `ContinentsPlusPlus.modinfo` file defines:
 
 ## Working with Base Game Modules
 
-### Voronoi System Imports
+### Voronoi System
 
 From `/base-standard/scripts/`:
-- `voronoi_maps/continents.js`: `VoronoiContinents` class
+- `voronoi_maps/unified-continents-base.js`: Main class for dynamic continents
+- `voronoi_maps/map-common.js`: Base `VoronoiMap` class with `initInternal()`
+- `voronoi_generators/map-generator.js`: `GeneratorType` enum
 - `voronoi_rules/avoid-edge.js`: `RuleAvoidEdge` for polar control
-- `kd-tree.js`: `TerrainType` enum
+- `kd-tree.js`: `TerrainType`, `WrapType`, `MapDims`
 
 ### Standard Terrain Generation
 
@@ -167,111 +174,80 @@ From `/base-standard/maps/`:
 - `map-globals.js`: Global constants
 - `map-utilities.js`: Helper functions
 
-## Localization
-
-Localization files in `modules/text/en_us/`:
-
-**ModuleText.xml** - Mod manager display:
-- `LOC_CONTINENTS_PLUS_PLUS_NAME`: "Continents++"
-- `LOC_CONTINENTS_PLUS_PLUS_DESCRIPTION`: Enhanced map generation description
-
-**MapText.xml** - In-game map chooser display:
-- Same tags with more detailed description about unique maps, fractal coastlines, etc.
-
 ## Testing
 
 ### In-Game Testing
 
-1. **Load the mod** in Civilization VII Addons menu
+1. **Fully restart** Civilization VII (JS modules are cached)
 2. **Start new game** with "Continents++" map script
 3. **Check console logs** for:
-   - `[ContinentsPP] Generating randomized config for X map`
-   - `[ContinentsPP] Total landmass size: XX`
-   - `[ContinentsPP] Continent ratio: XX.X% / XX.X%`
-   - `[ContinentsPP] Land/Water: XX.X% land / XX.X% water`
+   ```
+   [ContinentsPP] Landmass count: 4
+   [ContinentsPP] Using UnifiedContinentsBase for 4 continents
+   [ContinentsPP] Pre-init settings: landmassCount=4, totalLandmassSize=27
+   [ContinentsPP] Voronoi generator initialized successfully
+   [ContinentsPP] Post-init landmass count: 4
+   [ContinentsPP] Configuring 4 landmasses
+   ```
+
+4. **Verify "Grow Landmasses"** shows 3-7 regions (not just 2)
 
 ### Visual Verification
 
-- 2 distinct continents with asymmetric sizes
-- Organic, irregular coastlines (varied erosion)
+- Multiple distinct continents (3-7 based on map size)
+- Organic, irregular coastlines
 - Coastal islands near landmasses
-- Mid-ocean islands for naval gameplay
-- ~65-70% water coverage (adjust `totalLandmassSize` if too much/little land)
+- Mid-ocean islands
+- ~65-70% water coverage
 
-### Multiple Generation Test
+### Troubleshooting
 
-Generate several maps with same settings to verify randomization:
-- Total landmass size should vary within configured range
-- Continent size ratios should vary
-- Erosion levels should differ
-- Island counts should change
-- Mountain placement should vary
+**"voronoiMap.init is not a function"**:
+- Must use `initInternal()`, not `init()` - UnifiedContinentsBase doesn't define `init()`
 
-## Key Technical Details
+**Only 2 continents generated**:
+- Ensure `m_settings.landmassCount` is set BEFORE `initInternal()`
+- Restart game completely to reload cached JS modules
 
-### Seeded Random Number Generator
-
-```javascript
-function createSeededRandom(seed) {
-  return function() {
-    let t = seed += 0x6D2B79F5;
-    t = Math.imul(t ^ t >>> 15, t | 1);
-    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-```
-
-- Uses mulberry32 algorithm
-- Deterministic: same seed = same sequence
-- Used for all randomized parameters
-
-### Terrain Type Mapping
-
-```javascript
-TerrainType.Flat → globals.g_FlatTerrain
-TerrainType.Rough → globals.g_HillTerrain
-TerrainType.Mountainous → globals.g_MountainTerrain
-TerrainType.Volcano → globals.g_MountainTerrain
-Non-land → globals.g_OceanTerrain
-```
-
-### Starting Position System
-
-Uses **fertility-based method** (Civ VI algorithm):
-1. Empty `startSectors` array triggers fallback
-2. `StartPositioner.divideMapIntoMajorRegions()` creates regions
-3. Players assigned based on fertility and start biases
+**Script crashes silently**:
+- Add try-catch blocks around `initInternal()` and check for stack traces in logs
+- Verify all required imports are present (WrapType, GeneratorType)
 
 ## Tuning Guide
 
 ### Adjusting Water Coverage
 
 To increase water (less land):
-- Decrease `totalLandmassSize` min/max values in `MAP_SIZE_CONFIGS`
-- Current values target ~65-70% water
+- Decrease `totalLandmassSize` values in `MAP_SIZE_CONFIGS`
 
 To decrease water (more land):
-- Increase `totalLandmassSize` min/max values
+- Increase `totalLandmassSize` values
+
+### Adjusting Continent Count
+
+Modify `landmassCount.min` and `landmassCount.max` in `MAP_SIZE_CONFIGS`:
+- Valid range: 0-12 (per UnifiedContinentsBase schema)
+- Recommended: 3-7 for balanced gameplay
 
 ### Adjusting Coastline Complexity
 
 - Higher `erosionPercent` = more irregular coastlines
 - Lower `erosionPercent` = smoother coastlines
+- Range: 6-18% recommended
 
 ### Adjusting Island Density
 
-- `coastalIslands`: Number of islands near continents
-- `islandTotalSize`: Mid-ocean island coverage
-- `islandVariance`: Size variation of islands
+- `coastalIslands`: Number of islands near each continent
+- `island.totalSize`: Mid-ocean island coverage
+- `island.variance`: Size variation of islands
 
-## Future Enhancements
+## Key Code Locations
 
-Potential improvements if VoronoiContinents constraints can be bypassed:
-
-1. **More than 2 continents**: Would require extending `UnifiedContinentsBase` class
-2. **Dynamic continent count**: Scale with player count, not just map size
-3. **Island chains**: Volcanic arc generation between continents
-4. **Continental shelves**: More islands near coasts than deep ocean
-
-These would require access to base game source files or reverse engineering the Voronoi system.
+| Component | File | Lines |
+|-----------|------|-------|
+| Map size configs | continents-plus-plus.js | 97-171 |
+| Random config generator | continents-plus-plus.js | 177-285 |
+| Voronoi initialization | continents-plus-plus.js | 427-496 |
+| Config application | continents-plus-plus.js | 317-362 |
+| Terrain application | continents-plus-plus.js | 485-506 |
+| Player distribution | continents-plus-plus.js | 513-530 |
