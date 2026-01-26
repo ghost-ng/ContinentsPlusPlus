@@ -544,6 +544,10 @@ async function generateMap() {
   let landTiles = 0;
   let waterTiles = 0;
 
+  // Build a kd-tree of landmass tiles for coast region assignment (like base game voronoi)
+  const landmassKdTree = new kdTree((tile) => tile.pos);
+  landmassKdTree.build(tiles.flatMap((row) => row.filter((tile) => tile.landmassId > 0)));
+
   for (let y = 0; y < tiles.length; ++y) {
     for (let x = 0; x < tiles[y].length; ++x) {
       const tile = tiles[y][x];
@@ -557,9 +561,35 @@ async function generateMap() {
           : globals.g_FlatTerrain;
         TerrainBuilder.setTerrainType(x, y, type);
         landTiles++;
+
+        // Set landmass region ID (critical for resource distribution!)
+        // landmassId 1 = west/first major continent, 2 = east/second, etc.
+        if (tile.landmassId === 1) {
+          TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_WEST);
+        } else if (tile.landmassId === 2) {
+          TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_EAST);
+        } else if (tile.landmassId > 0) {
+          // Additional continents - tag as islands for resource purposes
+          TerrainBuilder.addPlotTag(x, y, PlotTags.PLOT_TAG_ISLAND);
+        }
       } else {
-        TerrainBuilder.setTerrainType(x, y, globals.g_OceanTerrain);
+        // Water tiles
+        const type = tile.terrainType === TerrainType.Coast ? globals.g_CoastTerrain : globals.g_OceanTerrain;
+        TerrainBuilder.setTerrainType(x, y, type);
         waterTiles++;
+
+        // Set landmass region for coast tiles (helps resource distribution near coasts)
+        if (tile.terrainType === TerrainType.Coast) {
+          const landmassTile = landmassKdTree.search(tile.pos);
+          const nearbyLandmassId = landmassTile?.data.landmassId ?? -1;
+          if (nearbyLandmassId === 1) {
+            TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_WEST);
+          } else if (nearbyLandmassId === 2) {
+            TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_EAST);
+          } else if (nearbyLandmassId > 0) {
+            TerrainBuilder.addPlotTag(x, y, PlotTags.PLOT_TAG_ISLAND);
+          }
+        }
       }
     }
   }
@@ -669,7 +699,9 @@ async function generateMap() {
   dumpPermanentSnow(iWidth, iHeight);
 
   console.log("[ContinentsPP] Generating resources...");
-  generateResources(iWidth, iHeight, hemispheres.west, hemispheres.east, iActualPlayers1, iActualPlayers2);
+  // generateResources signature: (iWidth, iHeight, minMarineResourceTypesOverride = 3)
+  // Resource distribution uses LandmassRegionId set during terrain application
+  generateResources(iWidth, iHeight);
 
   startPositions = assignStartPositions(iActualPlayers1, iActualPlayers2, hemispheres.west, hemispheres.east,
                                        iStartSectorRows, iStartSectorCols, startSectors, playerDistributionMode);
