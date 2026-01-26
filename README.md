@@ -1,6 +1,6 @@
 # Continents++ for Civilization VII
 
-Enhanced map generation using Voronoi plate tectonics simulation. Creates unique, Earth-like continents with organic coastlines, scattered archipelagos, and varied landmass sizes every game.
+Enhanced map generation using Voronoi plate tectonics simulation. Creates unique, Earth-like continents with organic coastlines, scattered archipelagos, and varied landmass sizes every game. Includes configurable player spawn distribution for multiplayer flexibility.
 
 ![Continents++ Map Preview](image.png)
 
@@ -30,6 +30,7 @@ The goal is simple: every new game should feel like unrolling a hand-drawn map f
 - **Organic Coastlines**: Fractal erosion creates natural-looking shores and bays
 - **Scattered Archipelagos**: Mid-ocean islands and coastal island chains
 - **Asymmetric Landmasses**: Continents vary in size like real-world geography
+- **Player Spawn Options**: Choose same hemisphere, fully random, or separate continents for multiplayer
 
 ## Installation
 
