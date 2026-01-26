@@ -4,7 +4,7 @@
 	<Properties>
 		<Name>LOC_CONTINENTS_PLUS_PLUS_NAME</Name>
 		<Description>LOC_CONTINENTS_PLUS_PLUS_DESCRIPTION</Description>
-		<Authors>miguel</Authors>
+		<Authors>ghost-ng</Authors>
 		<Package>MOD</Package>
 	</Properties>
 	<Dependencies>

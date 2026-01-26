@@ -2,6 +2,8 @@
 
 Enhanced map generation using Voronoi plate tectonics simulation. Creates unique, Earth-like continents with organic coastlines, scattered archipelagos, and varied landmass sizes every game.
 
+![Continents++ Map Preview](image.png)
+
 ## Features
 
 - **3-7 Dynamic Continents**: Unlike the base game's fixed 2-continent system, generates multiple landmasses that scale with map size
@@ -98,6 +100,6 @@ MIT License - Feel free to modify and redistribute.
 
 ## Credits
 
-- **Author**: miguel (ghost-ng)
+- **Author**: ghost-ng
 - **AI Assistance**: Claude (Anthropic)
 - **Base System**: Firaxis Games' Voronoi plate tectonics engine
