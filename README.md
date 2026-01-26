@@ -4,6 +4,24 @@ Enhanced map generation using Voronoi plate tectonics simulation. Creates unique
 
 ![Continents++ Map Preview](image.png)
 
+## Why This Mod Exists
+
+Great strategy maps share a common DNA with the best fantasy cartography. Think of Middle-earth, Westeros, or the worlds of your favorite RPGs - they all feature **asymmetric landmasses** of varying sizes, **organic coastlines** that invite exploration, and **strategic chokepoints** that make geography matter.
+
+The base game's "Continents" map type generates exactly two landmasses every time. While functional, this creates predictable gameplay: two teams, two sides, same strategic calculus game after game. Real Earth has seven continents of wildly different sizes. Tolkien's world has sprawling Arda alongside the isolated Numenor. Geography should create stories, not just divide players.
+
+**Continents++** was built to bring that sense of discovery back to Civilization VII:
+
+- **Unpredictability**: You might spawn on a massive supercontinent or a modest island nation. Your neighbors might be across a narrow strait or an ocean away. Every game presents a unique geopolitical puzzle.
+
+- **Organic Beauty**: Fractal erosion algorithms carve realistic coastlines with bays, peninsulas, and natural harbors. No more cookie-cutter continent shapes.
+
+- **Emergent Strategy**: With 3-7 continents of varying sizes, naval power matters differently each game. Some maps reward early exploration; others demand continental consolidation first.
+
+- **Replayability**: Randomized parameters mean even the same map seed produces different erosion patterns, island distributions, and terrain features.
+
+The goal is simple: every new game should feel like unrolling a hand-drawn map for the first time.
+
 ## Features
 
 - **3-7 Dynamic Continents**: Unlike the base game's fixed 2-continent system, generates multiple landmasses that scale with map size
