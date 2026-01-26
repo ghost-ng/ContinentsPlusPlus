@@ -105,11 +105,12 @@ export function chooseStartSectors(iNumPlayersLandmass1, iNumPlayersLandmass2, i
 //
 // The return is an array of starting plots.  DO NOT ASSUME THAT THE INDEX of the Starting Position is the Player ID!  It is NOT!
 // If more information is required from the starting position return array, make it into an array of objects with some context.
-export function assignStartPositions(iNumWest, iNumEast, west, east, iStartSectorRows, iStartSectorCols, sectors) {
+export function assignStartPositions(iNumWest, iNumEast, west, east, iStartSectorRows, iStartSectorCols, sectors, playerDistributionMode = 0) {
     console.log("Assigning Starting Positions");
     let startPositions = []; // Plot indices for start positions chosen
     console.log("iNumWest: " + iNumWest);
     console.log("iNumEast: " + iNumEast);
+    console.log("playerDistributionMode: " + playerDistributionMode);
     let iMaxNumMajors = 0;
     iMaxNumMajors = iNumWest + iNumEast;
     console.log("iMaxNumMajors: " + iMaxNumMajors);
@@ -124,9 +125,26 @@ export function assignStartPositions(iNumWest, iNumEast, west, east, iStartSecto
     if (iMaxNumMajors < aliveMajorIds.length) {
         console.log("The input total is less than the total alive majors: " + aliveMajorIds.length);
     }
-    // Less players shuffled in Antiquity games (always want final/AI players on other hemisphere)
+    // Player distribution mode controls how humans and AI are distributed:
+    // Mode 0: Same Hemisphere (default) - humans prefer same hemisphere (base game behavior)
+    // Mode 1: Fully Random - all players shuffled randomly across all regions
+    // Mode 2: Separate Continents - try to place players on different continents
     let iNumberHomelands = 0;
-    let bHumansLargestLandmass = GameInfo.Ages.lookup(Game.age).HumanPlayersPrimaryHemisphere;
+    let bHumansLargestLandmass;
+
+    if (playerDistributionMode === 1) {
+        // Fully Random: disable human preference, everyone shuffled equally
+        bHumansLargestLandmass = false;
+        console.log("Player distribution: Fully Random - all players shuffled equally");
+    } else if (playerDistributionMode === 2) {
+        // Separate Continents: also disable human preference for maximum spread
+        bHumansLargestLandmass = false;
+        console.log("Player distribution: Separate Continents - maximizing player spread");
+    } else {
+        // Mode 0 (Same Hemisphere): use base game behavior
+        bHumansLargestLandmass = GameInfo.Ages.lookup(Game.age).HumanPlayersPrimaryHemisphere;
+        console.log("Player distribution: Same Hemisphere - using age-based setting: " + bHumansLargestLandmass);
+    }
     if (bHumansLargestLandmass) {
         if (bEastBias) {
             iNumberHomelands = iNumEast;

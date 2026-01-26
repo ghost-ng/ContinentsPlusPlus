@@ -200,7 +200,25 @@ From `/base-standard/maps/`:
 - Mid-ocean islands
 - ~65-70% water coverage
 
+### Debugging
+
+**IMPORTANT**: Always check the game logs when debugging issues:
+
+```
+C:\Users\miguel\AppData\Local\Firaxis Games\Sid Meier's Civilization VII\Logs
+```
+
+Key log files:
+- `Lua.log` - Script errors and console output
+- `Database.log` - XML loading errors (check for mod-related warnings)
+- `Modding.log` - Mod loading and activation issues
+
 ### Troubleshooting
+
+**XML loading errors** (e.g., "Error Loading XML" with rollback):
+- Check `Database.log` for specific error messages
+- Common issues: wrong attribute names, missing required columns
+- Verify XML matches base game format in `SetupParameters.xml`
 
 **"voronoiMap.init is not a function"**:
 - Must use `initInternal()`, not `init()` - UnifiedContinentsBase doesn't define `init()`
@@ -212,6 +230,11 @@ From `/base-standard/maps/`:
 **Script crashes silently**:
 - Add try-catch blocks around `initInternal()` and check for stack traces in logs
 - Verify all required imports are present (WrapType, GeneratorType)
+
+**Map options not appearing in UI**:
+- Check `Database.log` for XML parse errors
+- Verify `Key2` matches exact map script path from `Maps` table
+- Use `Configuration.getMapValue("KeyName")` to read values in JS
 
 ## Tuning Guide
 

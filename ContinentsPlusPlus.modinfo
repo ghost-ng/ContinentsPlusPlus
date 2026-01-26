@@ -33,6 +33,7 @@
 				</UpdateText>
 				<UpdateDatabase>
 					<Item>modules/config/config.xml</Item>
+					<Item>modules/config/map-options.xml</Item>
 				</UpdateDatabase>
 			</Actions>
 		</ActionGroup>

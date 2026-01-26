@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Database>
+	<!-- Player Distribution Options for Continents++ -->
+	<Parameters>
+		<Row ParameterID="ContinentsPPPlayerDistribution"
+			 Name="LOC_CPP_PLAYER_DISTRIBUTION"
+			 Description="LOC_CPP_PLAYER_DISTRIBUTION_DESC"
+			 Domain="ContinentsPPPlayerDistribDomain"
+			 ConfigurationKey="ContinentsPPPlayerDistribution"
+			 DefaultValue="0"
+			 SortIndex="1050"
+			 Key1="Map"
+			 Key2="{ContinentsPlusPlus}modules/maps/continents-plus-plus.js"
+			 ConfigurationGroup="Map"
+			 GroupId="MapOptions"
+			 Hash="0"/>
+	</Parameters>
+
+	<DomainValues>
+		<!-- Value 0: Same Hemisphere (Base Game Default) -->
+		<Row Domain="ContinentsPPPlayerDistribDomain"
+			 Value="0"
+			 Name="LOC_CPP_DISTRIB_SAME_HEMISPHERE"
+			 Description="LOC_CPP_DISTRIB_SAME_HEMISPHERE_DESC"
+			 SortIndex="10"/>
+		<!-- Value 1: Fully Random Distribution -->
+		<Row Domain="ContinentsPPPlayerDistribDomain"
+			 Value="1"
+			 Name="LOC_CPP_DISTRIB_RANDOM"
+			 Description="LOC_CPP_DISTRIB_RANDOM_DESC"
+			 SortIndex="20"/>
+		<!-- Value 2: Separate Continents (when possible) -->
+		<Row Domain="ContinentsPPPlayerDistribDomain"
+			 Value="2"
+			 Name="LOC_CPP_DISTRIB_SEPARATE"
+			 Description="LOC_CPP_DISTRIB_SEPARATE_DESC"
+			 SortIndex="30"/>
+	</DomainValues>
+</Database>

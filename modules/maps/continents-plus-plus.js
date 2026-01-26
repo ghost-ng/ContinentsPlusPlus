@@ -636,6 +636,25 @@ async function generateMap() {
 
   console.log("[ContinentsPP] Assigning start positions (fertility-based)...");
 
+  // Read player distribution setting from game options
+  // 0 = Same Hemisphere (default), 1 = Fully Random, 2 = Separate Continents
+  let playerDistributionMode = 0;
+  try {
+    // Read from map configuration (set via map options UI dropdown)
+    const distribValue = Configuration.getMapValue("ContinentsPPPlayerDistribution");
+    if (distribValue !== undefined && distribValue !== null) {
+      playerDistributionMode = parseInt(distribValue);
+      console.log(`[ContinentsPP] Player distribution mode from settings: ${playerDistributionMode}`);
+    } else {
+      console.log("[ContinentsPP] Player distribution setting not found, using default (0 = Same Hemisphere)");
+    }
+  } catch (e) {
+    console.log(`[ContinentsPP] Could not read player distribution setting: ${e.message}`);
+  }
+
+  const distributionModeNames = ["Same Hemisphere", "Fully Random", "Separate Continents"];
+  console.log(`[ContinentsPP] Using distribution mode: ${distributionModeNames[playerDistributionMode] || "Unknown"}`);
+
   // Empty start sectors array triggers fertility-based assignment
   const startSectors = [];
   dumpStartSectors(startSectors);
@@ -653,7 +672,7 @@ async function generateMap() {
   generateResources(iWidth, iHeight, hemispheres.west, hemispheres.east, iActualPlayers1, iActualPlayers2);
 
   startPositions = assignStartPositions(iActualPlayers1, iActualPlayers2, hemispheres.west, hemispheres.east,
-                                       iStartSectorRows, iStartSectorCols, startSectors);
+                                       iStartSectorRows, iStartSectorCols, startSectors, playerDistributionMode);
 
   console.log("[ContinentsPP] Generating discoveries...");
   generateDiscoveries(iWidth, iHeight, startPositions);

@@ -84,6 +84,23 @@ The mod automatically adjusts continent count based on map size:
 | Large    | 4-6        | Expansive world with room to explore |
 | Huge     | 5-7        | Epic scale with many distinct landmasses |
 
+## Advanced Map Settings
+
+Continents++ adds a **Player Spawn Distribution** option to customize how players are placed across the map.
+
+![Advanced Settings](advanced_settings.png)
+
+| Setting | Description |
+|---------|-------------|
+| **Same Hemisphere (Default)** | Human players spawn in the same hemisphere. Standard Civilization behavior for team-based play. |
+| **Fully Random** | All players are randomly distributed across all continents and hemispheres. Maximum unpredictability for competitive multiplayer. |
+| **Separate Continents** | Each player starts on their own continent when possible. Encourages naval expansion and exploration. |
+
+To access this option:
+1. Select **Continents++** as your map type
+2. Click on **Advanced Settings** in the game setup screen
+3. Find **Player Spawn Distribution** under Map Options
+
 ## Technical Details
 
 - Uses `UnifiedContinentsBase` from Civ VII's Voronoi plate tectonics system
