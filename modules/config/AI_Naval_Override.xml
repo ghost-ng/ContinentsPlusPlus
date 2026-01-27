@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	AI Naval Enhancement for Continents++
+
+	Multi-continent maps require more aggressive AI naval behavior.
+	These overrides adjust naval operation parameters to encourage
+	cross-ocean invasions and naval warfare.
+-->
+<Database>
+	<!--
+		Naval City Assault Adjustments:
+		- MustHaveUnits: 5 -> 3 (triggers assaults earlier)
+		- MinOddsOfSuccess: 0.25 -> 0.15 (takes more risks)
+		- MaxTargetDistInArea: 30 -> 45 (targets distant continents)
+		- Priority: 3 -> 2 (prefers naval when applicable)
+	-->
+	<AiOperationDefs>
+		<Update>
+			<Where OperationName="Naval City Assault"/>
+			<Set MustHaveUnits="3" MinOddsOfSuccess="0.15" MaxTargetDistInArea="45" Priority="2"/>
+		</Update>
+	</AiOperationDefs>
+
+	<!--
+		Naval Assault Team Adjustments:
+		- InitialStrengthAdvantage: 1 -> 0 (doesn't wait for overwhelming force)
+		- OngoingStrengthAdvantage: 3 -> 5 (commits more reinforcements once started)
+	-->
+	<AiOperationTeams>
+		<Update>
+			<Where TeamName="Naval Assault" OperationName="Naval City Assault"/>
+			<Set InitialStrengthAdvantage="0" OngoingStrengthAdvantage="5"/>
+		</Update>
+	</AiOperationTeams>
+
+	<!--
+		Operation Limits:
+		- NAVAL_ASSAULT: 1 -> 2 (allows multi-front naval wars)
+	-->
+	<AiListItems>
+		<Update>
+			<Where ListType="BaseOperationsLimits" Item="NAVAL_ASSAULT"/>
+			<Set Value="2"/>
+		</Update>
+		<Update>
+			<Where ListType="PerWarOperationsLimits" Item="NAVAL_ASSAULT"/>
+			<Set Value="1"/>
+		</Update>
+	</AiListItems>
+</Database>
