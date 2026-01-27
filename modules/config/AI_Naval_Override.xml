@@ -37,7 +37,7 @@
 		Operation Limits:
 		- NAVAL_ASSAULT: 1 -> 2 (allows multi-front naval wars)
 	-->
-	<AiListItems>
+	<AiFavoredItems>
 		<Update>
 			<Where ListType="BaseOperationsLimits" Item="NAVAL_ASSAULT"/>
 			<Set Value="2"/>
@@ -46,5 +46,5 @@
 			<Where ListType="PerWarOperationsLimits" Item="NAVAL_ASSAULT"/>
 			<Set Value="1"/>
 		</Update>
-	</AiListItems>
+	</AiFavoredItems>
 </Database>
