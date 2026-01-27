@@ -268,10 +268,11 @@ function generateRandomizedConfig(mapSizeIndex, randomSeed) {
     },
 
     // Volcano configuration (scales with map size)
+    // Lower percent to compensate for more continent boundaries spawning extra volcanoes
     volcano: {
-      percent: 12 + mapSizeIndex * 2,
-      variance: 4 + mapSizeIndex,
-      randomize: 10 + mapSizeIndex * 3,
+      percent: 8 + mapSizeIndex,
+      variance: 3 + mapSizeIndex,
+      randomize: 8 + mapSizeIndex * 2,
     }
   };
 
