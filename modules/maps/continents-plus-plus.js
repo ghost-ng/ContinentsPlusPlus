@@ -562,15 +562,20 @@ async function generateMap() {
         TerrainBuilder.setTerrainType(x, y, type);
         landTiles++;
 
-        // Set landmass region ID (critical for resource distribution!)
-        // landmassId 1 = west/first major continent, 2 = east/second, etc.
+        // Set landmass region ID (critical for distant lands mechanic!)
+        // landmassId 1 = WEST (primary hemisphere / homelands)
+        // landmassId 2+ = EAST (secondary hemisphere / distant lands)
+        // This ensures REQUIREMENT_CITY_IS_DISTANT_LANDS works correctly
+        // and Exploration Age resource bonuses apply to all non-primary continents
         if (tile.landmassId === 1) {
           TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_WEST);
-        } else if (tile.landmassId === 2) {
+        } else if (tile.landmassId >= 2) {
+          // All other continents are "distant lands" (EAST hemisphere)
           TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_EAST);
-        } else if (tile.landmassId > 0) {
-          // Additional continents - tag as islands for resource purposes
-          TerrainBuilder.addPlotTag(x, y, PlotTags.PLOT_TAG_ISLAND);
+          // Also tag continents 3+ as islands for additional resource variety
+          if (tile.landmassId > 2) {
+            TerrainBuilder.addPlotTag(x, y, PlotTags.PLOT_TAG_ISLAND);
+          }
         }
       } else {
         // Water tiles - Ocean is deep water, everything else is shallow/coastal
@@ -586,10 +591,12 @@ async function generateMap() {
           const nearbyLandmassId = landmassTile?.data?.landmassId ?? -1;
           if (nearbyLandmassId === 1) {
             TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_WEST);
-          } else if (nearbyLandmassId === 2) {
+          } else if (nearbyLandmassId >= 2) {
+            // Coasts near continents 2+ are all "distant lands"
             TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_EAST);
-          } else if (nearbyLandmassId > 0) {
-            TerrainBuilder.addPlotTag(x, y, PlotTags.PLOT_TAG_ISLAND);
+            if (nearbyLandmassId > 2) {
+              TerrainBuilder.addPlotTag(x, y, PlotTags.PLOT_TAG_ISLAND);
+            }
           }
         }
       }
