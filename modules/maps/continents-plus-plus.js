@@ -128,9 +128,9 @@ const MAP_SIZE_CONFIGS = {
     landmassCount: { min: 3, max: 5 },
     totalLandmassSize: { min: 22, max: 28 },
     erosionPercent: { min: 8, max: 12 },
-    coastalIslands: { min: 8, max: 13 },
+    coastalIslands: { min: 10, max: 14 },          // Increased min for more islands
     coastalIslandSize: { min: 1.2, max: 1.8 },
-    islandTotalSize: { min: 4, max: 7 },
+    islandTotalSize: { min: 5, max: 8 },           // Increased min/max for more mid-ocean islands
     islandVariance: { min: 1.5, max: 3 },
     islandDistance: { min: 1, max: 3 },
     landmassDistance: { min: 3, max: 6 },
