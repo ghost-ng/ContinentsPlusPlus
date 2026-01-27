@@ -37,7 +37,7 @@ import * as globals from '/base-standard/maps/map-globals.js';
 import * as utilities from '/base-standard/maps/map-utilities.js';
 import { addNaturalWonders } from '/base-standard/maps/natural-wonder-generator.js';
 import { generateResources } from '/base-standard/maps/resource-generator.js';
-import { addVolcanoes } from '/base-standard/maps/volcano-generator.js';
+import { addVolcanoes, addTundraVolcanoes } from '/base-standard/maps/volcano-generator.js';
 import { assignAdvancedStartRegions } from '/base-standard/maps/assign-advanced-start-region.js';
 import { generateDiscoveries } from '/base-standard/maps/discovery-generator.js';
 import { generateSnow, dumpPermanentSnow } from '/base-standard/maps/snow-generator.js';
@@ -478,9 +478,11 @@ async function generateMap() {
   const rules = voronoiMap.getGenerator().getRules();
   for (const value of Object.values(rules)) {
     for (const rule of value) {
-      // Keep land away from poles
+      // Configure pole/edge avoidance - allow land to extend closer to poles for tundra
       if (rule.name == RuleAvoidEdge.getName()) {
-        rule.configValues.poleDistance = globals.g_PolarWaterRows;
+        rule.configValues.poleDistance = globals.g_PolarWaterRows;  // Hard cutoff (2 tiles)
+        rule.configValues.poleDistanceFalloff = 3;  // Reduced from 6 to allow land closer to poles
+        console.log(`[ContinentsPP] Set pole avoidance: poleDistance=${rule.configValues.poleDistance}, falloff=${rule.configValues.poleDistanceFalloff}`);
       }
       // Increase minimum ocean distance between continents (default is 4)
       // minDistance: minimum guaranteed ocean tiles between landmasses
@@ -619,6 +621,7 @@ async function generateMap() {
 
   console.log("[ContinentsPP] Designating biomes and features...");
   designateBiomes(iWidth, iHeight);
+  addTundraVolcanoes(iWidth, iHeight);  // Randomly adds volcanoes to tundra mountains
   addNaturalWonders(iWidth, iHeight, iNumNaturalWonders, naturalWonderEvent);
   TerrainBuilder.addFloodplains(4, 10);
   addFeatures(iWidth, iHeight);
