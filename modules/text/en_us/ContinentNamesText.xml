@@ -3,305 +3,305 @@
 	Localization for Extended Continent Names
 	200+ fantasy continent names for Continents++
 -->
-<GameData>
-	<LocalizedText>
+<Database>
+	<EnglishText>
 		<!-- Classical/Latin Style -->
-		<Row Tag="LOC_CONTINENT_AETHERIA_DESCRIPTION" Language="en_US">Aetheria</Row>
-		<Row Tag="LOC_CONTINENT_AURORIA_DESCRIPTION" Language="en_US">Auroria</Row>
-		<Row Tag="LOC_CONTINENT_CAELUM_DESCRIPTION" Language="en_US">Caelum</Row>
-		<Row Tag="LOC_CONTINENT_DRACONIA_DESCRIPTION" Language="en_US">Draconia</Row>
-		<Row Tag="LOC_CONTINENT_ELDORIA_DESCRIPTION" Language="en_US">Eldoria</Row>
-		<Row Tag="LOC_CONTINENT_FAERUM_DESCRIPTION" Language="en_US">Faerum</Row>
-		<Row Tag="LOC_CONTINENT_GLORIANA_DESCRIPTION" Language="en_US">Gloriana</Row>
-		<Row Tag="LOC_CONTINENT_HYPERIUM_DESCRIPTION" Language="en_US">Hyperium</Row>
-		<Row Tag="LOC_CONTINENT_ILLUSTRIA_DESCRIPTION" Language="en_US">Illustria</Row>
-		<Row Tag="LOC_CONTINENT_JUVENTAS_DESCRIPTION" Language="en_US">Juventas</Row>
-		<Row Tag="LOC_CONTINENT_KYTHERA_DESCRIPTION" Language="en_US">Kythera</Row>
-		<Row Tag="LOC_CONTINENT_LUMINARA_DESCRIPTION" Language="en_US">Luminara</Row>
-		<Row Tag="LOC_CONTINENT_MYSTERIA_DESCRIPTION" Language="en_US">Mysteria</Row>
-		<Row Tag="LOC_CONTINENT_NOVARIA_DESCRIPTION" Language="en_US">Novaria</Row>
-		<Row Tag="LOC_CONTINENT_OCEANUM_DESCRIPTION" Language="en_US">Oceanum</Row>
-		<Row Tag="LOC_CONTINENT_PRIMORIA_DESCRIPTION" Language="en_US">Primoria</Row>
-		<Row Tag="LOC_CONTINENT_QUAESTUM_DESCRIPTION" Language="en_US">Quaestum</Row>
-		<Row Tag="LOC_CONTINENT_REGALIA_DESCRIPTION" Language="en_US">Regalia</Row>
-		<Row Tag="LOC_CONTINENT_SOLARIA_DESCRIPTION" Language="en_US">Solaria</Row>
-		<Row Tag="LOC_CONTINENT_TERRANIS_DESCRIPTION" Language="en_US">Terranis</Row>
-		<Row Tag="LOC_CONTINENT_ULTERIA_DESCRIPTION" Language="en_US">Ulteria</Row>
-		<Row Tag="LOC_CONTINENT_VALORIA_DESCRIPTION" Language="en_US">Valoria</Row>
-		<Row Tag="LOC_CONTINENT_WYRDIA_DESCRIPTION" Language="en_US">Wyrdia</Row>
-		<Row Tag="LOC_CONTINENT_XENORIA_DESCRIPTION" Language="en_US">Xenoria</Row>
-		<Row Tag="LOC_CONTINENT_YVERNIA_DESCRIPTION" Language="en_US">Yvernia</Row>
-		<Row Tag="LOC_CONTINENT_ZEPHYRIA_DESCRIPTION" Language="en_US">Zephyria</Row>
-		<Row Tag="LOC_CONTINENT_ASTRALUM_DESCRIPTION" Language="en_US">Astralum</Row>
-		<Row Tag="LOC_CONTINENT_BOREALIS_DESCRIPTION" Language="en_US">Borealis</Row>
-		<Row Tag="LOC_CONTINENT_CELESTIUM_DESCRIPTION" Language="en_US">Celestium</Row>
-		<Row Tag="LOC_CONTINENT_DOMINARIA_DESCRIPTION" Language="en_US">Dominaria</Row>
+		<Row Tag="LOC_CONTINENT_AETHERIA_DESCRIPTION"><Text>Aetheria</Text></Row>
+		<Row Tag="LOC_CONTINENT_AURORIA_DESCRIPTION"><Text>Auroria</Text></Row>
+		<Row Tag="LOC_CONTINENT_CAELUM_DESCRIPTION"><Text>Caelum</Text></Row>
+		<Row Tag="LOC_CONTINENT_DRACONIA_DESCRIPTION"><Text>Draconia</Text></Row>
+		<Row Tag="LOC_CONTINENT_ELDORIA_DESCRIPTION"><Text>Eldoria</Text></Row>
+		<Row Tag="LOC_CONTINENT_FAERUM_DESCRIPTION"><Text>Faerum</Text></Row>
+		<Row Tag="LOC_CONTINENT_GLORIANA_DESCRIPTION"><Text>Gloriana</Text></Row>
+		<Row Tag="LOC_CONTINENT_HYPERIUM_DESCRIPTION"><Text>Hyperium</Text></Row>
+		<Row Tag="LOC_CONTINENT_ILLUSTRIA_DESCRIPTION"><Text>Illustria</Text></Row>
+		<Row Tag="LOC_CONTINENT_JUVENTAS_DESCRIPTION"><Text>Juventas</Text></Row>
+		<Row Tag="LOC_CONTINENT_KYTHERA_DESCRIPTION"><Text>Kythera</Text></Row>
+		<Row Tag="LOC_CONTINENT_LUMINARA_DESCRIPTION"><Text>Luminara</Text></Row>
+		<Row Tag="LOC_CONTINENT_MYSTERIA_DESCRIPTION"><Text>Mysteria</Text></Row>
+		<Row Tag="LOC_CONTINENT_NOVARIA_DESCRIPTION"><Text>Novaria</Text></Row>
+		<Row Tag="LOC_CONTINENT_OCEANUM_DESCRIPTION"><Text>Oceanum</Text></Row>
+		<Row Tag="LOC_CONTINENT_PRIMORIA_DESCRIPTION"><Text>Primoria</Text></Row>
+		<Row Tag="LOC_CONTINENT_QUAESTUM_DESCRIPTION"><Text>Quaestum</Text></Row>
+		<Row Tag="LOC_CONTINENT_REGALIA_DESCRIPTION"><Text>Regalia</Text></Row>
+		<Row Tag="LOC_CONTINENT_SOLARIA_DESCRIPTION"><Text>Solaria</Text></Row>
+		<Row Tag="LOC_CONTINENT_TERRANIS_DESCRIPTION"><Text>Terranis</Text></Row>
+		<Row Tag="LOC_CONTINENT_ULTERIA_DESCRIPTION"><Text>Ulteria</Text></Row>
+		<Row Tag="LOC_CONTINENT_VALORIA_DESCRIPTION"><Text>Valoria</Text></Row>
+		<Row Tag="LOC_CONTINENT_WYRDIA_DESCRIPTION"><Text>Wyrdia</Text></Row>
+		<Row Tag="LOC_CONTINENT_XENORIA_DESCRIPTION"><Text>Xenoria</Text></Row>
+		<Row Tag="LOC_CONTINENT_YVERNIA_DESCRIPTION"><Text>Yvernia</Text></Row>
+		<Row Tag="LOC_CONTINENT_ZEPHYRIA_DESCRIPTION"><Text>Zephyria</Text></Row>
+		<Row Tag="LOC_CONTINENT_ASTRALUM_DESCRIPTION"><Text>Astralum</Text></Row>
+		<Row Tag="LOC_CONTINENT_BOREALIS_DESCRIPTION"><Text>Borealis</Text></Row>
+		<Row Tag="LOC_CONTINENT_CELESTIUM_DESCRIPTION"><Text>Celestium</Text></Row>
+		<Row Tag="LOC_CONTINENT_DOMINARIA_DESCRIPTION"><Text>Dominaria</Text></Row>
 
 		<!-- Norse/Germanic Style -->
-		<Row Tag="LOC_CONTINENT_ASGHEIM_DESCRIPTION" Language="en_US">Asgheim</Row>
-		<Row Tag="LOC_CONTINENT_BRIMGARD_DESCRIPTION" Language="en_US">Brimgard</Row>
-		<Row Tag="LOC_CONTINENT_COLDFELL_DESCRIPTION" Language="en_US">Coldfell</Row>
-		<Row Tag="LOC_CONTINENT_DAWNMARK_DESCRIPTION" Language="en_US">Dawnmark</Row>
-		<Row Tag="LOC_CONTINENT_EVERHEIM_DESCRIPTION" Language="en_US">Everheim</Row>
-		<Row Tag="LOC_CONTINENT_FROSTGARD_DESCRIPTION" Language="en_US">Frostgard</Row>
-		<Row Tag="LOC_CONTINENT_GREYFELL_DESCRIPTION" Language="en_US">Greyfell</Row>
-		<Row Tag="LOC_CONTINENT_HIGHMARK_DESCRIPTION" Language="en_US">Highmark</Row>
-		<Row Tag="LOC_CONTINENT_IRONHEIM_DESCRIPTION" Language="en_US">Ironheim</Row>
-		<Row Tag="LOC_CONTINENT_JOTUNMARK_DESCRIPTION" Language="en_US">Jotunmark</Row>
-		<Row Tag="LOC_CONTINENT_KINGSHEIM_DESCRIPTION" Language="en_US">Kingsheim</Row>
-		<Row Tag="LOC_CONTINENT_LONGFELL_DESCRIPTION" Language="en_US">Longfell</Row>
-		<Row Tag="LOC_CONTINENT_MIDGAARD_DESCRIPTION" Language="en_US">Midgaard</Row>
-		<Row Tag="LOC_CONTINENT_NORDFELL_DESCRIPTION" Language="en_US">Nordfell</Row>
-		<Row Tag="LOC_CONTINENT_OSTMARK_DESCRIPTION" Language="en_US">Ostmark</Row>
-		<Row Tag="LOC_CONTINENT_PRIMALHEIM_DESCRIPTION" Language="en_US">Primalheim</Row>
-		<Row Tag="LOC_CONTINENT_QUEENSGARD_DESCRIPTION" Language="en_US">Queensgard</Row>
-		<Row Tag="LOC_CONTINENT_RIMEMARK_DESCRIPTION" Language="en_US">Rimemark</Row>
-		<Row Tag="LOC_CONTINENT_STORMHEIM_DESCRIPTION" Language="en_US">Stormheim</Row>
-		<Row Tag="LOC_CONTINENT_THORNFELL_DESCRIPTION" Language="en_US">Thornfell</Row>
-		<Row Tag="LOC_CONTINENT_ULFHEIM_DESCRIPTION" Language="en_US">Ulfheim</Row>
-		<Row Tag="LOC_CONTINENT_VARANGARD_DESCRIPTION" Language="en_US">Varangard</Row>
-		<Row Tag="LOC_CONTINENT_WESTMARK_DESCRIPTION" Language="en_US">Westmark</Row>
-		<Row Tag="LOC_CONTINENT_YGGMARK_DESCRIPTION" Language="en_US">Yggmark</Row>
-		<Row Tag="LOC_CONTINENT_ZORNHEIM_DESCRIPTION" Language="en_US">Zornheim</Row>
-		<Row Tag="LOC_CONTINENT_ASHGARD_DESCRIPTION" Language="en_US">Ashgard</Row>
-		<Row Tag="LOC_CONTINENT_BLAZEMARK_DESCRIPTION" Language="en_US">Blazemark</Row>
-		<Row Tag="LOC_CONTINENT_CROWNHEIM_DESCRIPTION" Language="en_US">Crownheim</Row>
-		<Row Tag="LOC_CONTINENT_DUSKFELL_DESCRIPTION" Language="en_US">Duskfell</Row>
-		<Row Tag="LOC_CONTINENT_EASTHEIM_DESCRIPTION" Language="en_US">Eastheim</Row>
+		<Row Tag="LOC_CONTINENT_ASGHEIM_DESCRIPTION"><Text>Asgheim</Text></Row>
+		<Row Tag="LOC_CONTINENT_BRIMGARD_DESCRIPTION"><Text>Brimgard</Text></Row>
+		<Row Tag="LOC_CONTINENT_COLDFELL_DESCRIPTION"><Text>Coldfell</Text></Row>
+		<Row Tag="LOC_CONTINENT_DAWNMARK_DESCRIPTION"><Text>Dawnmark</Text></Row>
+		<Row Tag="LOC_CONTINENT_EVERHEIM_DESCRIPTION"><Text>Everheim</Text></Row>
+		<Row Tag="LOC_CONTINENT_FROSTGARD_DESCRIPTION"><Text>Frostgard</Text></Row>
+		<Row Tag="LOC_CONTINENT_GREYFELL_DESCRIPTION"><Text>Greyfell</Text></Row>
+		<Row Tag="LOC_CONTINENT_HIGHMARK_DESCRIPTION"><Text>Highmark</Text></Row>
+		<Row Tag="LOC_CONTINENT_IRONHEIM_DESCRIPTION"><Text>Ironheim</Text></Row>
+		<Row Tag="LOC_CONTINENT_JOTUNMARK_DESCRIPTION"><Text>Jotunmark</Text></Row>
+		<Row Tag="LOC_CONTINENT_KINGSHEIM_DESCRIPTION"><Text>Kingsheim</Text></Row>
+		<Row Tag="LOC_CONTINENT_LONGFELL_DESCRIPTION"><Text>Longfell</Text></Row>
+		<Row Tag="LOC_CONTINENT_MIDGAARD_DESCRIPTION"><Text>Midgaard</Text></Row>
+		<Row Tag="LOC_CONTINENT_NORDFELL_DESCRIPTION"><Text>Nordfell</Text></Row>
+		<Row Tag="LOC_CONTINENT_OSTMARK_DESCRIPTION"><Text>Ostmark</Text></Row>
+		<Row Tag="LOC_CONTINENT_PRIMALHEIM_DESCRIPTION"><Text>Primalheim</Text></Row>
+		<Row Tag="LOC_CONTINENT_QUEENSGARD_DESCRIPTION"><Text>Queensgard</Text></Row>
+		<Row Tag="LOC_CONTINENT_RIMEMARK_DESCRIPTION"><Text>Rimemark</Text></Row>
+		<Row Tag="LOC_CONTINENT_STORMHEIM_DESCRIPTION"><Text>Stormheim</Text></Row>
+		<Row Tag="LOC_CONTINENT_THORNFELL_DESCRIPTION"><Text>Thornfell</Text></Row>
+		<Row Tag="LOC_CONTINENT_ULFHEIM_DESCRIPTION"><Text>Ulfheim</Text></Row>
+		<Row Tag="LOC_CONTINENT_VARANGARD_DESCRIPTION"><Text>Varangard</Text></Row>
+		<Row Tag="LOC_CONTINENT_WESTMARK_DESCRIPTION"><Text>Westmark</Text></Row>
+		<Row Tag="LOC_CONTINENT_YGGMARK_DESCRIPTION"><Text>Yggmark</Text></Row>
+		<Row Tag="LOC_CONTINENT_ZORNHEIM_DESCRIPTION"><Text>Zornheim</Text></Row>
+		<Row Tag="LOC_CONTINENT_ASHGARD_DESCRIPTION"><Text>Ashgard</Text></Row>
+		<Row Tag="LOC_CONTINENT_BLAZEMARK_DESCRIPTION"><Text>Blazemark</Text></Row>
+		<Row Tag="LOC_CONTINENT_CROWNHEIM_DESCRIPTION"><Text>Crownheim</Text></Row>
+		<Row Tag="LOC_CONTINENT_DUSKFELL_DESCRIPTION"><Text>Duskfell</Text></Row>
+		<Row Tag="LOC_CONTINENT_EASTHEIM_DESCRIPTION"><Text>Eastheim</Text></Row>
 
 		<!-- Celtic/Gaelic Style -->
-		<Row Tag="LOC_CONTINENT_ARDMOR_DESCRIPTION" Language="en_US">Ardmor</Row>
-		<Row Tag="LOC_CONTINENT_BRINNDUN_DESCRIPTION" Language="en_US">Brinndun</Row>
-		<Row Tag="LOC_CONTINENT_CAERWYN_DESCRIPTION" Language="en_US">Caerwyn</Row>
-		<Row Tag="LOC_CONTINENT_DUNMORA_DESCRIPTION" Language="en_US">Dunmora</Row>
-		<Row Tag="LOC_CONTINENT_EIREANN_DESCRIPTION" Language="en_US">Eireann</Row>
-		<Row Tag="LOC_CONTINENT_FINNRATH_DESCRIPTION" Language="en_US">Finnrath</Row>
-		<Row Tag="LOC_CONTINENT_GLENMORE_DESCRIPTION" Language="en_US">Glenmore</Row>
-		<Row Tag="LOC_CONTINENT_HIGHRATH_DESCRIPTION" Language="en_US">Highrath</Row>
-		<Row Tag="LOC_CONTINENT_INNISDUN_DESCRIPTION" Language="en_US">Innisdun</Row>
-		<Row Tag="LOC_CONTINENT_KILMORA_DESCRIPTION" Language="en_US">Kilmora</Row>
-		<Row Tag="LOC_CONTINENT_LOCHWYN_DESCRIPTION" Language="en_US">Lochwyn</Row>
-		<Row Tag="LOC_CONTINENT_MORVETH_DESCRIPTION" Language="en_US">Morveth</Row>
-		<Row Tag="LOC_CONTINENT_NEAMHAIN_DESCRIPTION" Language="en_US">Neamhain</Row>
-		<Row Tag="LOC_CONTINENT_OISINDUN_DESCRIPTION" Language="en_US">Oisindun</Row>
-		<Row Tag="LOC_CONTINENT_PENRATH_DESCRIPTION" Language="en_US">Penrath</Row>
-		<Row Tag="LOC_CONTINENT_RAVENMORE_DESCRIPTION" Language="en_US">Ravenmore</Row>
-		<Row Tag="LOC_CONTINENT_SIONNACH_DESCRIPTION" Language="en_US">Sionnach</Row>
-		<Row Tag="LOC_CONTINENT_TIRMOR_DESCRIPTION" Language="en_US">Tirmor</Row>
-		<Row Tag="LOC_CONTINENT_ULAIDH_DESCRIPTION" Language="en_US">Ulaidh</Row>
-		<Row Tag="LOC_CONTINENT_VINRATH_DESCRIPTION" Language="en_US">Vinrath</Row>
-		<Row Tag="LOC_CONTINENT_WYNDMOR_DESCRIPTION" Language="en_US">Wyndmor</Row>
-		<Row Tag="LOC_CONTINENT_YNISDUN_DESCRIPTION" Language="en_US">Ynisdun</Row>
-		<Row Tag="LOC_CONTINENT_ANNWYN_DESCRIPTION" Language="en_US">Annwyn</Row>
-		<Row Tag="LOC_CONTINENT_BRYCHDUN_DESCRIPTION" Language="en_US">Brychdun</Row>
-		<Row Tag="LOC_CONTINENT_CERNRATH_DESCRIPTION" Language="en_US">Cernrath</Row>
+		<Row Tag="LOC_CONTINENT_ARDMOR_DESCRIPTION"><Text>Ardmor</Text></Row>
+		<Row Tag="LOC_CONTINENT_BRINNDUN_DESCRIPTION"><Text>Brinndun</Text></Row>
+		<Row Tag="LOC_CONTINENT_CAERWYN_DESCRIPTION"><Text>Caerwyn</Text></Row>
+		<Row Tag="LOC_CONTINENT_DUNMORA_DESCRIPTION"><Text>Dunmora</Text></Row>
+		<Row Tag="LOC_CONTINENT_EIREANN_DESCRIPTION"><Text>Eireann</Text></Row>
+		<Row Tag="LOC_CONTINENT_FINNRATH_DESCRIPTION"><Text>Finnrath</Text></Row>
+		<Row Tag="LOC_CONTINENT_GLENMORE_DESCRIPTION"><Text>Glenmore</Text></Row>
+		<Row Tag="LOC_CONTINENT_HIGHRATH_DESCRIPTION"><Text>Highrath</Text></Row>
+		<Row Tag="LOC_CONTINENT_INNISDUN_DESCRIPTION"><Text>Innisdun</Text></Row>
+		<Row Tag="LOC_CONTINENT_KILMORA_DESCRIPTION"><Text>Kilmora</Text></Row>
+		<Row Tag="LOC_CONTINENT_LOCHWYN_DESCRIPTION"><Text>Lochwyn</Text></Row>
+		<Row Tag="LOC_CONTINENT_MORVETH_DESCRIPTION"><Text>Morveth</Text></Row>
+		<Row Tag="LOC_CONTINENT_NEAMHAIN_DESCRIPTION"><Text>Neamhain</Text></Row>
+		<Row Tag="LOC_CONTINENT_OISINDUN_DESCRIPTION"><Text>Oisindun</Text></Row>
+		<Row Tag="LOC_CONTINENT_PENRATH_DESCRIPTION"><Text>Penrath</Text></Row>
+		<Row Tag="LOC_CONTINENT_RAVENMORE_DESCRIPTION"><Text>Ravenmore</Text></Row>
+		<Row Tag="LOC_CONTINENT_SIONNACH_DESCRIPTION"><Text>Sionnach</Text></Row>
+		<Row Tag="LOC_CONTINENT_TIRMOR_DESCRIPTION"><Text>Tirmor</Text></Row>
+		<Row Tag="LOC_CONTINENT_ULAIDH_DESCRIPTION"><Text>Ulaidh</Text></Row>
+		<Row Tag="LOC_CONTINENT_VINRATH_DESCRIPTION"><Text>Vinrath</Text></Row>
+		<Row Tag="LOC_CONTINENT_WYNDMOR_DESCRIPTION"><Text>Wyndmor</Text></Row>
+		<Row Tag="LOC_CONTINENT_YNISDUN_DESCRIPTION"><Text>Ynisdun</Text></Row>
+		<Row Tag="LOC_CONTINENT_ANNWYN_DESCRIPTION"><Text>Annwyn</Text></Row>
+		<Row Tag="LOC_CONTINENT_BRYCHDUN_DESCRIPTION"><Text>Brychdun</Text></Row>
+		<Row Tag="LOC_CONTINENT_CERNRATH_DESCRIPTION"><Text>Cernrath</Text></Row>
 
 		<!-- Elvish/Tolkien Style -->
-		<Row Tag="LOC_CONTINENT_AELDOR_DESCRIPTION" Language="en_US">Aeldor</Row>
-		<Row Tag="LOC_CONTINENT_BELEGORN_DESCRIPTION" Language="en_US">Belegorn</Row>
-		<Row Tag="LOC_CONTINENT_CELENDIL_DESCRIPTION" Language="en_US">Celendil</Row>
-		<Row Tag="LOC_CONTINENT_DORLINDOR_DESCRIPTION" Language="en_US">Dorlindor</Row>
-		<Row Tag="LOC_CONTINENT_ELENATH_DESCRIPTION" Language="en_US">Elenath</Row>
-		<Row Tag="LOC_CONTINENT_FAELINDOR_DESCRIPTION" Language="en_US">Faelindor</Row>
-		<Row Tag="LOC_CONTINENT_GILTHEON_DESCRIPTION" Language="en_US">Giltheon</Row>
-		<Row Tag="LOC_CONTINENT_HITHAEGLIR_DESCRIPTION" Language="en_US">Hithaeglir</Row>
-		<Row Tag="LOC_CONTINENT_ITHILORN_DESCRIPTION" Language="en_US">Ithilorn</Row>
-		<Row Tag="LOC_CONTINENT_KEMENTARI_DESCRIPTION" Language="en_US">Kementari</Row>
-		<Row Tag="LOC_CONTINENT_LORENDIL_DESCRIPTION" Language="en_US">Lorendil</Row>
-		<Row Tag="LOC_CONTINENT_MELINDOR_DESCRIPTION" Language="en_US">Melindor</Row>
-		<Row Tag="LOC_CONTINENT_NOLONDIL_DESCRIPTION" Language="en_US">Nolondil</Row>
-		<Row Tag="LOC_CONTINENT_ORODUIN_DESCRIPTION" Language="en_US">Oroduin</Row>
-		<Row Tag="LOC_CONTINENT_PELARGIR_DESCRIPTION" Language="en_US">Pelargir</Row>
-		<Row Tag="LOC_CONTINENT_QUELINDOR_DESCRIPTION" Language="en_US">Quelindor</Row>
-		<Row Tag="LOC_CONTINENT_RIMENDIL_DESCRIPTION" Language="en_US">Rimendil</Row>
-		<Row Tag="LOC_CONTINENT_SILINDOR_DESCRIPTION" Language="en_US">Silindor</Row>
-		<Row Tag="LOC_CONTINENT_TELPERION_DESCRIPTION" Language="en_US">Telperion</Row>
-		<Row Tag="LOC_CONTINENT_ULMONDIL_DESCRIPTION" Language="en_US">Ulmondil</Row>
-		<Row Tag="LOC_CONTINENT_VALINORN_DESCRIPTION" Language="en_US">Valinorn</Row>
-		<Row Tag="LOC_CONTINENT_WESTERNESSE_DESCRIPTION" Language="en_US">Westernesse</Row>
-		<Row Tag="LOC_CONTINENT_YAVINDOR_DESCRIPTION" Language="en_US">Yavindor</Row>
-		<Row Tag="LOC_CONTINENT_ZENITHIL_DESCRIPTION" Language="en_US">Zenithil</Row>
-		<Row Tag="LOC_CONTINENT_ALDARON_DESCRIPTION" Language="en_US">Aldaron</Row>
-		<Row Tag="LOC_CONTINENT_BRETHILORN_DESCRIPTION" Language="en_US">Brethilorn</Row>
-		<Row Tag="LOC_CONTINENT_CIRDANETH_DESCRIPTION" Language="en_US">Cirdaneth</Row>
-		<Row Tag="LOC_CONTINENT_DUILINDOR_DESCRIPTION" Language="en_US">Duilindor</Row>
-		<Row Tag="LOC_CONTINENT_EARENDIL_DESCRIPTION" Language="en_US">Earendil</Row>
+		<Row Tag="LOC_CONTINENT_AELDOR_DESCRIPTION"><Text>Aeldor</Text></Row>
+		<Row Tag="LOC_CONTINENT_BELEGORN_DESCRIPTION"><Text>Belegorn</Text></Row>
+		<Row Tag="LOC_CONTINENT_CELENDIL_DESCRIPTION"><Text>Celendil</Text></Row>
+		<Row Tag="LOC_CONTINENT_DORLINDOR_DESCRIPTION"><Text>Dorlindor</Text></Row>
+		<Row Tag="LOC_CONTINENT_ELENATH_DESCRIPTION"><Text>Elenath</Text></Row>
+		<Row Tag="LOC_CONTINENT_FAELINDOR_DESCRIPTION"><Text>Faelindor</Text></Row>
+		<Row Tag="LOC_CONTINENT_GILTHEON_DESCRIPTION"><Text>Giltheon</Text></Row>
+		<Row Tag="LOC_CONTINENT_HITHAEGLIR_DESCRIPTION"><Text>Hithaeglir</Text></Row>
+		<Row Tag="LOC_CONTINENT_ITHILORN_DESCRIPTION"><Text>Ithilorn</Text></Row>
+		<Row Tag="LOC_CONTINENT_KEMENTARI_DESCRIPTION"><Text>Kementari</Text></Row>
+		<Row Tag="LOC_CONTINENT_LORENDIL_DESCRIPTION"><Text>Lorendil</Text></Row>
+		<Row Tag="LOC_CONTINENT_MELINDOR_DESCRIPTION"><Text>Melindor</Text></Row>
+		<Row Tag="LOC_CONTINENT_NOLONDIL_DESCRIPTION"><Text>Nolondil</Text></Row>
+		<Row Tag="LOC_CONTINENT_ORODUIN_DESCRIPTION"><Text>Oroduin</Text></Row>
+		<Row Tag="LOC_CONTINENT_PELARGIR_DESCRIPTION"><Text>Pelargir</Text></Row>
+		<Row Tag="LOC_CONTINENT_QUELINDOR_DESCRIPTION"><Text>Quelindor</Text></Row>
+		<Row Tag="LOC_CONTINENT_RIMENDIL_DESCRIPTION"><Text>Rimendil</Text></Row>
+		<Row Tag="LOC_CONTINENT_SILINDOR_DESCRIPTION"><Text>Silindor</Text></Row>
+		<Row Tag="LOC_CONTINENT_TELPERION_DESCRIPTION"><Text>Telperion</Text></Row>
+		<Row Tag="LOC_CONTINENT_ULMONDIL_DESCRIPTION"><Text>Ulmondil</Text></Row>
+		<Row Tag="LOC_CONTINENT_VALINORN_DESCRIPTION"><Text>Valinorn</Text></Row>
+		<Row Tag="LOC_CONTINENT_WESTERNESSE_DESCRIPTION"><Text>Westernesse</Text></Row>
+		<Row Tag="LOC_CONTINENT_YAVINDOR_DESCRIPTION"><Text>Yavindor</Text></Row>
+		<Row Tag="LOC_CONTINENT_ZENITHIL_DESCRIPTION"><Text>Zenithil</Text></Row>
+		<Row Tag="LOC_CONTINENT_ALDARON_DESCRIPTION"><Text>Aldaron</Text></Row>
+		<Row Tag="LOC_CONTINENT_BRETHILORN_DESCRIPTION"><Text>Brethilorn</Text></Row>
+		<Row Tag="LOC_CONTINENT_CIRDANETH_DESCRIPTION"><Text>Cirdaneth</Text></Row>
+		<Row Tag="LOC_CONTINENT_DUILINDOR_DESCRIPTION"><Text>Duilindor</Text></Row>
+		<Row Tag="LOC_CONTINENT_EARENDIL_DESCRIPTION"><Text>Earendil</Text></Row>
 
 		<!-- Greek/Ancient Style -->
-		<Row Tag="LOC_CONTINENT_ACHERON_DESCRIPTION" Language="en_US">Acheron</Row>
-		<Row Tag="LOC_CONTINENT_BASILEA_DESCRIPTION" Language="en_US">Basilea</Row>
-		<Row Tag="LOC_CONTINENT_CHRYSOS_DESCRIPTION" Language="en_US">Chrysos</Row>
-		<Row Tag="LOC_CONTINENT_DELPHOS_DESCRIPTION" Language="en_US">Delphos</Row>
-		<Row Tag="LOC_CONTINENT_EPHYRA_DESCRIPTION" Language="en_US">Ephyra</Row>
-		<Row Tag="LOC_CONTINENT_PHAEDROS_DESCRIPTION" Language="en_US">Phaedros</Row>
-		<Row Tag="LOC_CONTINENT_GORGONEA_DESCRIPTION" Language="en_US">Gorgonea</Row>
-		<Row Tag="LOC_CONTINENT_HELIOSA_DESCRIPTION" Language="en_US">Heliosa</Row>
-		<Row Tag="LOC_CONTINENT_ICARIOS_DESCRIPTION" Language="en_US">Icarios</Row>
-		<Row Tag="LOC_CONTINENT_KADMOS_DESCRIPTION" Language="en_US">Kadmos</Row>
-		<Row Tag="LOC_CONTINENT_LAKEDAEMON_DESCRIPTION" Language="en_US">Lakedaemon</Row>
-		<Row Tag="LOC_CONTINENT_MYKENOS_DESCRIPTION" Language="en_US">Mykenos</Row>
-		<Row Tag="LOC_CONTINENT_NEREOS_DESCRIPTION" Language="en_US">Nereos</Row>
-		<Row Tag="LOC_CONTINENT_OLYMPEA_DESCRIPTION" Language="en_US">Olympea</Row>
-		<Row Tag="LOC_CONTINENT_PELASGOS_DESCRIPTION" Language="en_US">Pelasgos</Row>
-		<Row Tag="LOC_CONTINENT_RHODOS_DESCRIPTION" Language="en_US">Rhodos</Row>
-		<Row Tag="LOC_CONTINENT_STYGIA_DESCRIPTION" Language="en_US">Stygia</Row>
-		<Row Tag="LOC_CONTINENT_THEBANOS_DESCRIPTION" Language="en_US">Thebanos</Row>
-		<Row Tag="LOC_CONTINENT_URANIKOS_DESCRIPTION" Language="en_US">Uranikos</Row>
-		<Row Tag="LOC_CONTINENT_XANTHOS_DESCRIPTION" Language="en_US">Xanthos</Row>
-		<Row Tag="LOC_CONTINENT_ZEPHYROS_DESCRIPTION" Language="en_US">Zephyros</Row>
-		<Row Tag="LOC_CONTINENT_AEGAEA_DESCRIPTION" Language="en_US">Aegaea</Row>
-		<Row Tag="LOC_CONTINENT_BOREAS_DESCRIPTION" Language="en_US">Boreas</Row>
-		<Row Tag="LOC_CONTINENT_CYRENIA_DESCRIPTION" Language="en_US">Cyrenia</Row>
-		<Row Tag="LOC_CONTINENT_DORIANOS_DESCRIPTION" Language="en_US">Dorianos</Row>
+		<Row Tag="LOC_CONTINENT_ACHERON_DESCRIPTION"><Text>Acheron</Text></Row>
+		<Row Tag="LOC_CONTINENT_BASILEA_DESCRIPTION"><Text>Basilea</Text></Row>
+		<Row Tag="LOC_CONTINENT_CHRYSOS_DESCRIPTION"><Text>Chrysos</Text></Row>
+		<Row Tag="LOC_CONTINENT_DELPHOS_DESCRIPTION"><Text>Delphos</Text></Row>
+		<Row Tag="LOC_CONTINENT_EPHYRA_DESCRIPTION"><Text>Ephyra</Text></Row>
+		<Row Tag="LOC_CONTINENT_PHAEDROS_DESCRIPTION"><Text>Phaedros</Text></Row>
+		<Row Tag="LOC_CONTINENT_GORGONEA_DESCRIPTION"><Text>Gorgonea</Text></Row>
+		<Row Tag="LOC_CONTINENT_HELIOSA_DESCRIPTION"><Text>Heliosa</Text></Row>
+		<Row Tag="LOC_CONTINENT_ICARIOS_DESCRIPTION"><Text>Icarios</Text></Row>
+		<Row Tag="LOC_CONTINENT_KADMOS_DESCRIPTION"><Text>Kadmos</Text></Row>
+		<Row Tag="LOC_CONTINENT_LAKEDAEMON_DESCRIPTION"><Text>Lakedaemon</Text></Row>
+		<Row Tag="LOC_CONTINENT_MYKENOS_DESCRIPTION"><Text>Mykenos</Text></Row>
+		<Row Tag="LOC_CONTINENT_NEREOS_DESCRIPTION"><Text>Nereos</Text></Row>
+		<Row Tag="LOC_CONTINENT_OLYMPEA_DESCRIPTION"><Text>Olympea</Text></Row>
+		<Row Tag="LOC_CONTINENT_PELASGOS_DESCRIPTION"><Text>Pelasgos</Text></Row>
+		<Row Tag="LOC_CONTINENT_RHODOS_DESCRIPTION"><Text>Rhodos</Text></Row>
+		<Row Tag="LOC_CONTINENT_STYGIA_DESCRIPTION"><Text>Stygia</Text></Row>
+		<Row Tag="LOC_CONTINENT_THEBANOS_DESCRIPTION"><Text>Thebanos</Text></Row>
+		<Row Tag="LOC_CONTINENT_URANIKOS_DESCRIPTION"><Text>Uranikos</Text></Row>
+		<Row Tag="LOC_CONTINENT_XANTHOS_DESCRIPTION"><Text>Xanthos</Text></Row>
+		<Row Tag="LOC_CONTINENT_ZEPHYROS_DESCRIPTION"><Text>Zephyros</Text></Row>
+		<Row Tag="LOC_CONTINENT_AEGAEA_DESCRIPTION"><Text>Aegaea</Text></Row>
+		<Row Tag="LOC_CONTINENT_BOREAS_DESCRIPTION"><Text>Boreas</Text></Row>
+		<Row Tag="LOC_CONTINENT_CYRENIA_DESCRIPTION"><Text>Cyrenia</Text></Row>
+		<Row Tag="LOC_CONTINENT_DORIANOS_DESCRIPTION"><Text>Dorianos</Text></Row>
 
 		<!-- Compound/Elemental Style -->
-		<Row Tag="LOC_CONTINENT_SHADOWMERE_DESCRIPTION" Language="en_US">Shadowmere</Row>
-		<Row Tag="LOC_CONTINENT_STORMFALL_DESCRIPTION" Language="en_US">Stormfall</Row>
-		<Row Tag="LOC_CONTINENT_DAWNREACH_DESCRIPTION" Language="en_US">Dawnreach</Row>
-		<Row Tag="LOC_CONTINENT_NIGHTHOLLOW_DESCRIPTION" Language="en_US">Nighthollow</Row>
-		<Row Tag="LOC_CONTINENT_SUNFORGE_DESCRIPTION" Language="en_US">Sunforge</Row>
-		<Row Tag="LOC_CONTINENT_MOONVALE_DESCRIPTION" Language="en_US">Moonvale</Row>
-		<Row Tag="LOC_CONTINENT_FIREDEEP_DESCRIPTION" Language="en_US">Firedeep</Row>
-		<Row Tag="LOC_CONTINENT_ICEVEIL_DESCRIPTION" Language="en_US">Iceveil</Row>
-		<Row Tag="LOC_CONTINENT_WINDSPIRE_DESCRIPTION" Language="en_US">Windspire</Row>
-		<Row Tag="LOC_CONTINENT_EARTHHEART_DESCRIPTION" Language="en_US">Earthheart</Row>
-		<Row Tag="LOC_CONTINENT_STARFALL_DESCRIPTION" Language="en_US">Starfall</Row>
-		<Row Tag="LOC_CONTINENT_VOIDREACH_DESCRIPTION" Language="en_US">Voidreach</Row>
-		<Row Tag="LOC_CONTINENT_THUNDERPEAK_DESCRIPTION" Language="en_US">Thunderpeak</Row>
-		<Row Tag="LOC_CONTINENT_CRYSTALSHORE_DESCRIPTION" Language="en_US">Crystalshore</Row>
-		<Row Tag="LOC_CONTINENT_SILVERMIST_DESCRIPTION" Language="en_US">Silvermist</Row>
-		<Row Tag="LOC_CONTINENT_GOLDENSEA_DESCRIPTION" Language="en_US">Goldensea</Row>
-		<Row Tag="LOC_CONTINENT_IRONCOAST_DESCRIPTION" Language="en_US">Ironcoast</Row>
-		<Row Tag="LOC_CONTINENT_BRONZEVALE_DESCRIPTION" Language="en_US">Bronzevale</Row>
-		<Row Tag="LOC_CONTINENT_EMERALDRIFT_DESCRIPTION" Language="en_US">Emeraldrift</Row>
-		<Row Tag="LOC_CONTINENT_RUBYSHORE_DESCRIPTION" Language="en_US">Rubyshore</Row>
-		<Row Tag="LOC_CONTINENT_SAPPHIREDEEP_DESCRIPTION" Language="en_US">Sapphiredeep</Row>
-		<Row Tag="LOC_CONTINENT_AMBERFALL_DESCRIPTION" Language="en_US">Amberfall</Row>
-		<Row Tag="LOC_CONTINENT_JADESPIRE_DESCRIPTION" Language="en_US">Jadespire</Row>
-		<Row Tag="LOC_CONTINENT_OBSIDIANREACH_DESCRIPTION" Language="en_US">Obsidianreach</Row>
-		<Row Tag="LOC_CONTINENT_OPALVALE_DESCRIPTION" Language="en_US">Opalvale</Row>
-		<Row Tag="LOC_CONTINENT_DRAGONMERE_DESCRIPTION" Language="en_US">Dragonmere</Row>
-		<Row Tag="LOC_CONTINENT_SERPENTCOAST_DESCRIPTION" Language="en_US">Serpentcoast</Row>
-		<Row Tag="LOC_CONTINENT_PHOENIXRISE_DESCRIPTION" Language="en_US">Phoenixrise</Row>
-		<Row Tag="LOC_CONTINENT_GRIFFONHOLD_DESCRIPTION" Language="en_US">Griffonhold</Row>
-		<Row Tag="LOC_CONTINENT_WYVERNSPIRE_DESCRIPTION" Language="en_US">Wyvernspire</Row>
+		<Row Tag="LOC_CONTINENT_SHADOWMERE_DESCRIPTION"><Text>Shadowmere</Text></Row>
+		<Row Tag="LOC_CONTINENT_STORMFALL_DESCRIPTION"><Text>Stormfall</Text></Row>
+		<Row Tag="LOC_CONTINENT_DAWNREACH_DESCRIPTION"><Text>Dawnreach</Text></Row>
+		<Row Tag="LOC_CONTINENT_NIGHTHOLLOW_DESCRIPTION"><Text>Nighthollow</Text></Row>
+		<Row Tag="LOC_CONTINENT_SUNFORGE_DESCRIPTION"><Text>Sunforge</Text></Row>
+		<Row Tag="LOC_CONTINENT_MOONVALE_DESCRIPTION"><Text>Moonvale</Text></Row>
+		<Row Tag="LOC_CONTINENT_FIREDEEP_DESCRIPTION"><Text>Firedeep</Text></Row>
+		<Row Tag="LOC_CONTINENT_ICEVEIL_DESCRIPTION"><Text>Iceveil</Text></Row>
+		<Row Tag="LOC_CONTINENT_WINDSPIRE_DESCRIPTION"><Text>Windspire</Text></Row>
+		<Row Tag="LOC_CONTINENT_EARTHHEART_DESCRIPTION"><Text>Earthheart</Text></Row>
+		<Row Tag="LOC_CONTINENT_STARFALL_DESCRIPTION"><Text>Starfall</Text></Row>
+		<Row Tag="LOC_CONTINENT_VOIDREACH_DESCRIPTION"><Text>Voidreach</Text></Row>
+		<Row Tag="LOC_CONTINENT_THUNDERPEAK_DESCRIPTION"><Text>Thunderpeak</Text></Row>
+		<Row Tag="LOC_CONTINENT_CRYSTALSHORE_DESCRIPTION"><Text>Crystalshore</Text></Row>
+		<Row Tag="LOC_CONTINENT_SILVERMIST_DESCRIPTION"><Text>Silvermist</Text></Row>
+		<Row Tag="LOC_CONTINENT_GOLDENSEA_DESCRIPTION"><Text>Goldensea</Text></Row>
+		<Row Tag="LOC_CONTINENT_IRONCOAST_DESCRIPTION"><Text>Ironcoast</Text></Row>
+		<Row Tag="LOC_CONTINENT_BRONZEVALE_DESCRIPTION"><Text>Bronzevale</Text></Row>
+		<Row Tag="LOC_CONTINENT_EMERALDRIFT_DESCRIPTION"><Text>Emeraldrift</Text></Row>
+		<Row Tag="LOC_CONTINENT_RUBYSHORE_DESCRIPTION"><Text>Rubyshore</Text></Row>
+		<Row Tag="LOC_CONTINENT_SAPPHIREDEEP_DESCRIPTION"><Text>Sapphiredeep</Text></Row>
+		<Row Tag="LOC_CONTINENT_AMBERFALL_DESCRIPTION"><Text>Amberfall</Text></Row>
+		<Row Tag="LOC_CONTINENT_JADESPIRE_DESCRIPTION"><Text>Jadespire</Text></Row>
+		<Row Tag="LOC_CONTINENT_OBSIDIANREACH_DESCRIPTION"><Text>Obsidianreach</Text></Row>
+		<Row Tag="LOC_CONTINENT_OPALVALE_DESCRIPTION"><Text>Opalvale</Text></Row>
+		<Row Tag="LOC_CONTINENT_DRAGONMERE_DESCRIPTION"><Text>Dragonmere</Text></Row>
+		<Row Tag="LOC_CONTINENT_SERPENTCOAST_DESCRIPTION"><Text>Serpentcoast</Text></Row>
+		<Row Tag="LOC_CONTINENT_PHOENIXRISE_DESCRIPTION"><Text>Phoenixrise</Text></Row>
+		<Row Tag="LOC_CONTINENT_GRIFFONHOLD_DESCRIPTION"><Text>Griffonhold</Text></Row>
+		<Row Tag="LOC_CONTINENT_WYVERNSPIRE_DESCRIPTION"><Text>Wyvernspire</Text></Row>
 
 		<!-- Eastern/Asian Inspired -->
-		<Row Tag="LOC_CONTINENT_AKATSUKI_DESCRIPTION" Language="en_US">Akatsuki</Row>
-		<Row Tag="LOC_CONTINENT_BYAKUYA_DESCRIPTION" Language="en_US">Byakuya</Row>
-		<Row Tag="LOC_CONTINENT_CHIKARA_DESCRIPTION" Language="en_US">Chikara</Row>
-		<Row Tag="LOC_CONTINENT_DENSETSU_DESCRIPTION" Language="en_US">Densetsu</Row>
-		<Row Tag="LOC_CONTINENT_EIEN_DESCRIPTION" Language="en_US">Eien</Row>
-		<Row Tag="LOC_CONTINENT_FUJISAN_DESCRIPTION" Language="en_US">Fujisan</Row>
-		<Row Tag="LOC_CONTINENT_GENKAI_DESCRIPTION" Language="en_US">Genkai</Row>
-		<Row Tag="LOC_CONTINENT_HIKARI_DESCRIPTION" Language="en_US">Hikari</Row>
-		<Row Tag="LOC_CONTINENT_IZANAGI_DESCRIPTION" Language="en_US">Izanagi</Row>
-		<Row Tag="LOC_CONTINENT_KAGUYA_DESCRIPTION" Language="en_US">Kaguya</Row>
-		<Row Tag="LOC_CONTINENT_LONGSHAN_DESCRIPTION" Language="en_US">Longshan</Row>
-		<Row Tag="LOC_CONTINENT_MINGZHU_DESCRIPTION" Language="en_US">Mingzhu</Row>
-		<Row Tag="LOC_CONTINENT_NANHAI_DESCRIPTION" Language="en_US">Nanhai</Row>
-		<Row Tag="LOC_CONTINENT_QILIN_DESCRIPTION" Language="en_US">Qilin</Row>
-		<Row Tag="LOC_CONTINENT_RYUJIN_DESCRIPTION" Language="en_US">Ryujin</Row>
-		<Row Tag="LOC_CONTINENT_SHENZHOU_DESCRIPTION" Language="en_US">Shenzhou</Row>
-		<Row Tag="LOC_CONTINENT_TIANXIA_DESCRIPTION" Language="en_US">Tianxia</Row>
-		<Row Tag="LOC_CONTINENT_WUXING_DESCRIPTION" Language="en_US">Wuxing</Row>
-		<Row Tag="LOC_CONTINENT_XUANWU_DESCRIPTION" Language="en_US">Xuanwu</Row>
-		<Row Tag="LOC_CONTINENT_YINGLONG_DESCRIPTION" Language="en_US">Yinglong</Row>
-		<Row Tag="LOC_CONTINENT_ZHONGYUAN_DESCRIPTION" Language="en_US">Zhongyuan</Row>
-		<Row Tag="LOC_CONTINENT_AMATERASU_DESCRIPTION" Language="en_US">Amaterasu</Row>
-		<Row Tag="LOC_CONTINENT_BENGHAI_DESCRIPTION" Language="en_US">Benghai</Row>
-		<Row Tag="LOC_CONTINENT_CHANGBAI_DESCRIPTION" Language="en_US">Changbai</Row>
-		<Row Tag="LOC_CONTINENT_DONGFANG_DESCRIPTION" Language="en_US">Dongfang</Row>
+		<Row Tag="LOC_CONTINENT_AKATSUKI_DESCRIPTION"><Text>Akatsuki</Text></Row>
+		<Row Tag="LOC_CONTINENT_BYAKUYA_DESCRIPTION"><Text>Byakuya</Text></Row>
+		<Row Tag="LOC_CONTINENT_CHIKARA_DESCRIPTION"><Text>Chikara</Text></Row>
+		<Row Tag="LOC_CONTINENT_DENSETSU_DESCRIPTION"><Text>Densetsu</Text></Row>
+		<Row Tag="LOC_CONTINENT_EIEN_DESCRIPTION"><Text>Eien</Text></Row>
+		<Row Tag="LOC_CONTINENT_FUJISAN_DESCRIPTION"><Text>Fujisan</Text></Row>
+		<Row Tag="LOC_CONTINENT_GENKAI_DESCRIPTION"><Text>Genkai</Text></Row>
+		<Row Tag="LOC_CONTINENT_HIKARI_DESCRIPTION"><Text>Hikari</Text></Row>
+		<Row Tag="LOC_CONTINENT_IZANAGI_DESCRIPTION"><Text>Izanagi</Text></Row>
+		<Row Tag="LOC_CONTINENT_KAGUYA_DESCRIPTION"><Text>Kaguya</Text></Row>
+		<Row Tag="LOC_CONTINENT_LONGSHAN_DESCRIPTION"><Text>Longshan</Text></Row>
+		<Row Tag="LOC_CONTINENT_MINGZHU_DESCRIPTION"><Text>Mingzhu</Text></Row>
+		<Row Tag="LOC_CONTINENT_NANHAI_DESCRIPTION"><Text>Nanhai</Text></Row>
+		<Row Tag="LOC_CONTINENT_QILIN_DESCRIPTION"><Text>Qilin</Text></Row>
+		<Row Tag="LOC_CONTINENT_RYUJIN_DESCRIPTION"><Text>Ryujin</Text></Row>
+		<Row Tag="LOC_CONTINENT_SHENZHOU_DESCRIPTION"><Text>Shenzhou</Text></Row>
+		<Row Tag="LOC_CONTINENT_TIANXIA_DESCRIPTION"><Text>Tianxia</Text></Row>
+		<Row Tag="LOC_CONTINENT_WUXING_DESCRIPTION"><Text>Wuxing</Text></Row>
+		<Row Tag="LOC_CONTINENT_XUANWU_DESCRIPTION"><Text>Xuanwu</Text></Row>
+		<Row Tag="LOC_CONTINENT_YINGLONG_DESCRIPTION"><Text>Yinglong</Text></Row>
+		<Row Tag="LOC_CONTINENT_ZHONGYUAN_DESCRIPTION"><Text>Zhongyuan</Text></Row>
+		<Row Tag="LOC_CONTINENT_AMATERASU_DESCRIPTION"><Text>Amaterasu</Text></Row>
+		<Row Tag="LOC_CONTINENT_BENGHAI_DESCRIPTION"><Text>Benghai</Text></Row>
+		<Row Tag="LOC_CONTINENT_CHANGBAI_DESCRIPTION"><Text>Changbai</Text></Row>
+		<Row Tag="LOC_CONTINENT_DONGFANG_DESCRIPTION"><Text>Dongfang</Text></Row>
 
 		<!-- Arabic/Persian Inspired -->
-		<Row Tag="LOC_CONTINENT_ALQAMAR_DESCRIPTION" Language="en_US">Al-Qamar</Row>
-		<Row Tag="LOC_CONTINENT_BAHARAT_DESCRIPTION" Language="en_US">Baharat</Row>
-		<Row Tag="LOC_CONTINENT_DARIYAH_DESCRIPTION" Language="en_US">Dariyah</Row>
-		<Row Tag="LOC_CONTINENT_FALAKIYA_DESCRIPTION" Language="en_US">Falakiya</Row>
-		<Row Tag="LOC_CONTINENT_GHARBIYA_DESCRIPTION" Language="en_US">Gharbiya</Row>
-		<Row Tag="LOC_CONTINENT_HAJARIYA_DESCRIPTION" Language="en_US">Hajariya</Row>
-		<Row Tag="LOC_CONTINENT_ISFARAN_DESCRIPTION" Language="en_US">Isfaran</Row>
-		<Row Tag="LOC_CONTINENT_JABALIYA_DESCRIPTION" Language="en_US">Jabaliya</Row>
-		<Row Tag="LOC_CONTINENT_KHAZARA_DESCRIPTION" Language="en_US">Khazara</Row>
-		<Row Tag="LOC_CONTINENT_LAHABIYA_DESCRIPTION" Language="en_US">Lahabiya</Row>
-		<Row Tag="LOC_CONTINENT_MAJARIYA_DESCRIPTION" Language="en_US">Majariya</Row>
-		<Row Tag="LOC_CONTINENT_NAHARIYA_DESCRIPTION" Language="en_US">Nahariya</Row>
-		<Row Tag="LOC_CONTINENT_QADESIYA_DESCRIPTION" Language="en_US">Qadesiya</Row>
-		<Row Tag="LOC_CONTINENT_RAMLIYA_DESCRIPTION" Language="en_US">Ramliya</Row>
-		<Row Tag="LOC_CONTINENT_SAHARIYA_DESCRIPTION" Language="en_US">Sahariya</Row>
-		<Row Tag="LOC_CONTINENT_TAHARIYA_DESCRIPTION" Language="en_US">Tahariya</Row>
-		<Row Tag="LOC_CONTINENT_WAHIDIYA_DESCRIPTION" Language="en_US">Wahidiya</Row>
-		<Row Tag="LOC_CONTINENT_ZAFARIYA_DESCRIPTION" Language="en_US">Zafariya</Row>
-		<Row Tag="LOC_CONTINENT_AZHARAN_DESCRIPTION" Language="en_US">Azharan</Row>
-		<Row Tag="LOC_CONTINENT_BARQIYA_DESCRIPTION" Language="en_US">Barqiya</Row>
+		<Row Tag="LOC_CONTINENT_ALQAMAR_DESCRIPTION"><Text>Al-Qamar</Text></Row>
+		<Row Tag="LOC_CONTINENT_BAHARAT_DESCRIPTION"><Text>Baharat</Text></Row>
+		<Row Tag="LOC_CONTINENT_DARIYAH_DESCRIPTION"><Text>Dariyah</Text></Row>
+		<Row Tag="LOC_CONTINENT_FALAKIYA_DESCRIPTION"><Text>Falakiya</Text></Row>
+		<Row Tag="LOC_CONTINENT_GHARBIYA_DESCRIPTION"><Text>Gharbiya</Text></Row>
+		<Row Tag="LOC_CONTINENT_HAJARIYA_DESCRIPTION"><Text>Hajariya</Text></Row>
+		<Row Tag="LOC_CONTINENT_ISFARAN_DESCRIPTION"><Text>Isfaran</Text></Row>
+		<Row Tag="LOC_CONTINENT_JABALIYA_DESCRIPTION"><Text>Jabaliya</Text></Row>
+		<Row Tag="LOC_CONTINENT_KHAZARA_DESCRIPTION"><Text>Khazara</Text></Row>
+		<Row Tag="LOC_CONTINENT_LAHABIYA_DESCRIPTION"><Text>Lahabiya</Text></Row>
+		<Row Tag="LOC_CONTINENT_MAJARIYA_DESCRIPTION"><Text>Majariya</Text></Row>
+		<Row Tag="LOC_CONTINENT_NAHARIYA_DESCRIPTION"><Text>Nahariya</Text></Row>
+		<Row Tag="LOC_CONTINENT_QADESIYA_DESCRIPTION"><Text>Qadesiya</Text></Row>
+		<Row Tag="LOC_CONTINENT_RAMLIYA_DESCRIPTION"><Text>Ramliya</Text></Row>
+		<Row Tag="LOC_CONTINENT_SAHARIYA_DESCRIPTION"><Text>Sahariya</Text></Row>
+		<Row Tag="LOC_CONTINENT_TAHARIYA_DESCRIPTION"><Text>Tahariya</Text></Row>
+		<Row Tag="LOC_CONTINENT_WAHIDIYA_DESCRIPTION"><Text>Wahidiya</Text></Row>
+		<Row Tag="LOC_CONTINENT_ZAFARIYA_DESCRIPTION"><Text>Zafariya</Text></Row>
+		<Row Tag="LOC_CONTINENT_AZHARAN_DESCRIPTION"><Text>Azharan</Text></Row>
+		<Row Tag="LOC_CONTINENT_BARQIYA_DESCRIPTION"><Text>Barqiya</Text></Row>
 
 		<!-- African Inspired -->
-		<Row Tag="LOC_CONTINENT_ADINKRA_DESCRIPTION" Language="en_US">Adinkra</Row>
-		<Row Tag="LOC_CONTINENT_BENUBA_DESCRIPTION" Language="en_US">Benuba</Row>
-		<Row Tag="LOC_CONTINENT_CHAKAMA_DESCRIPTION" Language="en_US">Chakama</Row>
-		<Row Tag="LOC_CONTINENT_DABARA_DESCRIPTION" Language="en_US">Dabara</Row>
-		<Row Tag="LOC_CONTINENT_EKWENSU_DESCRIPTION" Language="en_US">Ekwensu</Row>
-		<Row Tag="LOC_CONTINENT_FULANGA_DESCRIPTION" Language="en_US">Fulanga</Row>
-		<Row Tag="LOC_CONTINENT_GAMBELA_DESCRIPTION" Language="en_US">Gambela</Row>
-		<Row Tag="LOC_CONTINENT_HARAMBA_DESCRIPTION" Language="en_US">Haramba</Row>
-		<Row Tag="LOC_CONTINENT_INKOSANA_DESCRIPTION" Language="en_US">Inkosana</Row>
-		<Row Tag="LOC_CONTINENT_JABARI_DESCRIPTION" Language="en_US">Jabari</Row>
-		<Row Tag="LOC_CONTINENT_KARAMOJA_DESCRIPTION" Language="en_US">Karamoja</Row>
-		<Row Tag="LOC_CONTINENT_LUBANGA_DESCRIPTION" Language="en_US">Lubanga</Row>
-		<Row Tag="LOC_CONTINENT_MAKONDE_DESCRIPTION" Language="en_US">Makonde</Row>
-		<Row Tag="LOC_CONTINENT_NYAMWEZI_DESCRIPTION" Language="en_US">Nyamwezi</Row>
-		<Row Tag="LOC_CONTINENT_ORISHA_DESCRIPTION" Language="en_US">Orisha</Row>
-		<Row Tag="LOC_CONTINENT_PWANI_DESCRIPTION" Language="en_US">Pwani</Row>
-		<Row Tag="LOC_CONTINENT_RAFIKI_DESCRIPTION" Language="en_US">Rafiki</Row>
-		<Row Tag="LOC_CONTINENT_SAHELI_DESCRIPTION" Language="en_US">Saheli</Row>
-		<Row Tag="LOC_CONTINENT_TIMBALA_DESCRIPTION" Language="en_US">Timbala</Row>
-		<Row Tag="LOC_CONTINENT_UBUNTU_DESCRIPTION" Language="en_US">Ubuntu</Row>
-		<Row Tag="LOC_CONTINENT_VAKANDA_DESCRIPTION" Language="en_US">Vakanda</Row>
-		<Row Tag="LOC_CONTINENT_WATUMBA_DESCRIPTION" Language="en_US">Watumba</Row>
-		<Row Tag="LOC_CONTINENT_YORUBIA_DESCRIPTION" Language="en_US">Yorubia</Row>
-		<Row Tag="LOC_CONTINENT_ZAMBARA_DESCRIPTION" Language="en_US">Zambara</Row>
-		<Row Tag="LOC_CONTINENT_AKWAMU_DESCRIPTION" Language="en_US">Akwamu</Row>
+		<Row Tag="LOC_CONTINENT_ADINKRA_DESCRIPTION"><Text>Adinkra</Text></Row>
+		<Row Tag="LOC_CONTINENT_BENUBA_DESCRIPTION"><Text>Benuba</Text></Row>
+		<Row Tag="LOC_CONTINENT_CHAKAMA_DESCRIPTION"><Text>Chakama</Text></Row>
+		<Row Tag="LOC_CONTINENT_DABARA_DESCRIPTION"><Text>Dabara</Text></Row>
+		<Row Tag="LOC_CONTINENT_EKWENSU_DESCRIPTION"><Text>Ekwensu</Text></Row>
+		<Row Tag="LOC_CONTINENT_FULANGA_DESCRIPTION"><Text>Fulanga</Text></Row>
+		<Row Tag="LOC_CONTINENT_GAMBELA_DESCRIPTION"><Text>Gambela</Text></Row>
+		<Row Tag="LOC_CONTINENT_HARAMBA_DESCRIPTION"><Text>Haramba</Text></Row>
+		<Row Tag="LOC_CONTINENT_INKOSANA_DESCRIPTION"><Text>Inkosana</Text></Row>
+		<Row Tag="LOC_CONTINENT_JABARI_DESCRIPTION"><Text>Jabari</Text></Row>
+		<Row Tag="LOC_CONTINENT_KARAMOJA_DESCRIPTION"><Text>Karamoja</Text></Row>
+		<Row Tag="LOC_CONTINENT_LUBANGA_DESCRIPTION"><Text>Lubanga</Text></Row>
+		<Row Tag="LOC_CONTINENT_MAKONDE_DESCRIPTION"><Text>Makonde</Text></Row>
+		<Row Tag="LOC_CONTINENT_NYAMWEZI_DESCRIPTION"><Text>Nyamwezi</Text></Row>
+		<Row Tag="LOC_CONTINENT_ORISHA_DESCRIPTION"><Text>Orisha</Text></Row>
+		<Row Tag="LOC_CONTINENT_PWANI_DESCRIPTION"><Text>Pwani</Text></Row>
+		<Row Tag="LOC_CONTINENT_RAFIKI_DESCRIPTION"><Text>Rafiki</Text></Row>
+		<Row Tag="LOC_CONTINENT_SAHELI_DESCRIPTION"><Text>Saheli</Text></Row>
+		<Row Tag="LOC_CONTINENT_TIMBALA_DESCRIPTION"><Text>Timbala</Text></Row>
+		<Row Tag="LOC_CONTINENT_UBUNTU_DESCRIPTION"><Text>Ubuntu</Text></Row>
+		<Row Tag="LOC_CONTINENT_VAKANDA_DESCRIPTION"><Text>Vakanda</Text></Row>
+		<Row Tag="LOC_CONTINENT_WATUMBA_DESCRIPTION"><Text>Watumba</Text></Row>
+		<Row Tag="LOC_CONTINENT_YORUBIA_DESCRIPTION"><Text>Yorubia</Text></Row>
+		<Row Tag="LOC_CONTINENT_ZAMBARA_DESCRIPTION"><Text>Zambara</Text></Row>
+		<Row Tag="LOC_CONTINENT_AKWAMU_DESCRIPTION"><Text>Akwamu</Text></Row>
 
 		<!-- Unique Fantasy Names -->
-		<Row Tag="LOC_CONTINENT_ABRAXIA_DESCRIPTION" Language="en_US">Abraxia</Row>
-		<Row Tag="LOC_CONTINENT_BYTHORIA_DESCRIPTION" Language="en_US">Bythoria</Row>
-		<Row Tag="LOC_CONTINENT_CALYNDROS_DESCRIPTION" Language="en_US">Calyndros</Row>
-		<Row Tag="LOC_CONTINENT_DROVETH_DESCRIPTION" Language="en_US">Droveth</Row>
-		<Row Tag="LOC_CONTINENT_ERYNDAL_DESCRIPTION" Language="en_US">Eryndal</Row>
-		<Row Tag="LOC_CONTINENT_FYNDARA_DESCRIPTION" Language="en_US">Fyndara</Row>
-		<Row Tag="LOC_CONTINENT_GRYMHOLD_DESCRIPTION" Language="en_US">Grymhold</Row>
-		<Row Tag="LOC_CONTINENT_HEXORIA_DESCRIPTION" Language="en_US">Hexoria</Row>
-		<Row Tag="LOC_CONTINENT_ILLYNDRA_DESCRIPTION" Language="en_US">Illyndra</Row>
-		<Row Tag="LOC_CONTINENT_JYRADOR_DESCRIPTION" Language="en_US">Jyrador</Row>
-		<Row Tag="LOC_CONTINENT_KRYNNETH_DESCRIPTION" Language="en_US">Krynneth</Row>
-		<Row Tag="LOC_CONTINENT_LYTHANDRA_DESCRIPTION" Language="en_US">Lythandra</Row>
-		<Row Tag="LOC_CONTINENT_MYRANTHIA_DESCRIPTION" Language="en_US">Myranthia</Row>
-		<Row Tag="LOC_CONTINENT_NYTHORIA_DESCRIPTION" Language="en_US">Nythoria</Row>
-		<Row Tag="LOC_CONTINENT_ONDRIUM_DESCRIPTION" Language="en_US">Ondrium</Row>
-		<Row Tag="LOC_CONTINENT_PYRALIS_DESCRIPTION" Language="en_US">Pyralis</Row>
-		<Row Tag="LOC_CONTINENT_QUELORIA_DESCRIPTION" Language="en_US">Queloria</Row>
-		<Row Tag="LOC_CONTINENT_RYVANDOR_DESCRIPTION" Language="en_US">Ryvandor</Row>
-		<Row Tag="LOC_CONTINENT_SYNDARA_DESCRIPTION" Language="en_US">Syndara</Row>
-		<Row Tag="LOC_CONTINENT_THYRANIX_DESCRIPTION" Language="en_US">Thyranix</Row>
-		<Row Tag="LOC_CONTINENT_ULDORIA_DESCRIPTION" Language="en_US">Uldoria</Row>
-		<Row Tag="LOC_CONTINENT_VYRANTHOS_DESCRIPTION" Language="en_US">Vyranthos</Row>
-		<Row Tag="LOC_CONTINENT_WYRMANTH_DESCRIPTION" Language="en_US">Wyrmanth</Row>
-		<Row Tag="LOC_CONTINENT_XYLANDRIA_DESCRIPTION" Language="en_US">Xylandria</Row>
-		<Row Tag="LOC_CONTINENT_YTHRANOX_DESCRIPTION" Language="en_US">Ythranox</Row>
-		<Row Tag="LOC_CONTINENT_ZYNDORIA_DESCRIPTION" Language="en_US">Zyndoria</Row>
-		<Row Tag="LOC_CONTINENT_ARKANOS_DESCRIPTION" Language="en_US">Arkanos</Row>
-		<Row Tag="LOC_CONTINENT_BELMORIA_DESCRIPTION" Language="en_US">Belmoria</Row>
-		<Row Tag="LOC_CONTINENT_CORVANTHIA_DESCRIPTION" Language="en_US">Corvanthia</Row>
-		<Row Tag="LOC_CONTINENT_DELVORIA_DESCRIPTION" Language="en_US">Delvoria</Row>
-		<Row Tag="LOC_CONTINENT_ETHRANDOR_DESCRIPTION" Language="en_US">Ethrandor</Row>
-		<Row Tag="LOC_CONTINENT_FYRMANDEL_DESCRIPTION" Language="en_US">Fyrmandel</Row>
-		<Row Tag="LOC_CONTINENT_GALDORIA_DESCRIPTION" Language="en_US">Galdoria</Row>
-		<Row Tag="LOC_CONTINENT_HELYNDRA_DESCRIPTION" Language="en_US">Helyndra</Row>
-		<Row Tag="LOC_CONTINENT_ISTARIX_DESCRIPTION" Language="en_US">Istarix</Row>
-		<Row Tag="LOC_CONTINENT_JORMANDYR_DESCRIPTION" Language="en_US">Jormandyr</Row>
-		<Row Tag="LOC_CONTINENT_KALDORIX_DESCRIPTION" Language="en_US">Kaldorix</Row>
-		<Row Tag="LOC_CONTINENT_LORATHIAN_DESCRIPTION" Language="en_US">Lorathian</Row>
-		<Row Tag="LOC_CONTINENT_MALDORATH_DESCRIPTION" Language="en_US">Maldorath</Row>
-		<Row Tag="LOC_CONTINENT_NETHRANDOR_DESCRIPTION" Language="en_US">Nethrandor</Row>
-	</LocalizedText>
-</GameData>
+		<Row Tag="LOC_CONTINENT_ABRAXIA_DESCRIPTION"><Text>Abraxia</Text></Row>
+		<Row Tag="LOC_CONTINENT_BYTHORIA_DESCRIPTION"><Text>Bythoria</Text></Row>
+		<Row Tag="LOC_CONTINENT_CALYNDROS_DESCRIPTION"><Text>Calyndros</Text></Row>
+		<Row Tag="LOC_CONTINENT_DROVETH_DESCRIPTION"><Text>Droveth</Text></Row>
+		<Row Tag="LOC_CONTINENT_ERYNDAL_DESCRIPTION"><Text>Eryndal</Text></Row>
+		<Row Tag="LOC_CONTINENT_FYNDARA_DESCRIPTION"><Text>Fyndara</Text></Row>
+		<Row Tag="LOC_CONTINENT_GRYMHOLD_DESCRIPTION"><Text>Grymhold</Text></Row>
+		<Row Tag="LOC_CONTINENT_HEXORIA_DESCRIPTION"><Text>Hexoria</Text></Row>
+		<Row Tag="LOC_CONTINENT_ILLYNDRA_DESCRIPTION"><Text>Illyndra</Text></Row>
+		<Row Tag="LOC_CONTINENT_JYRADOR_DESCRIPTION"><Text>Jyrador</Text></Row>
+		<Row Tag="LOC_CONTINENT_KRYNNETH_DESCRIPTION"><Text>Krynneth</Text></Row>
+		<Row Tag="LOC_CONTINENT_LYTHANDRA_DESCRIPTION"><Text>Lythandra</Text></Row>
+		<Row Tag="LOC_CONTINENT_MYRANTHIA_DESCRIPTION"><Text>Myranthia</Text></Row>
+		<Row Tag="LOC_CONTINENT_NYTHORIA_DESCRIPTION"><Text>Nythoria</Text></Row>
+		<Row Tag="LOC_CONTINENT_ONDRIUM_DESCRIPTION"><Text>Ondrium</Text></Row>
+		<Row Tag="LOC_CONTINENT_PYRALIS_DESCRIPTION"><Text>Pyralis</Text></Row>
+		<Row Tag="LOC_CONTINENT_QUELORIA_DESCRIPTION"><Text>Queloria</Text></Row>
+		<Row Tag="LOC_CONTINENT_RYVANDOR_DESCRIPTION"><Text>Ryvandor</Text></Row>
+		<Row Tag="LOC_CONTINENT_SYNDARA_DESCRIPTION"><Text>Syndara</Text></Row>
+		<Row Tag="LOC_CONTINENT_THYRANIX_DESCRIPTION"><Text>Thyranix</Text></Row>
+		<Row Tag="LOC_CONTINENT_ULDORIA_DESCRIPTION"><Text>Uldoria</Text></Row>
+		<Row Tag="LOC_CONTINENT_VYRANTHOS_DESCRIPTION"><Text>Vyranthos</Text></Row>
+		<Row Tag="LOC_CONTINENT_WYRMANTH_DESCRIPTION"><Text>Wyrmanth</Text></Row>
+		<Row Tag="LOC_CONTINENT_XYLANDRIA_DESCRIPTION"><Text>Xylandria</Text></Row>
+		<Row Tag="LOC_CONTINENT_YTHRANOX_DESCRIPTION"><Text>Ythranox</Text></Row>
+		<Row Tag="LOC_CONTINENT_ZYNDORIA_DESCRIPTION"><Text>Zyndoria</Text></Row>
+		<Row Tag="LOC_CONTINENT_ARKANOS_DESCRIPTION"><Text>Arkanos</Text></Row>
+		<Row Tag="LOC_CONTINENT_BELMORIA_DESCRIPTION"><Text>Belmoria</Text></Row>
+		<Row Tag="LOC_CONTINENT_CORVANTHIA_DESCRIPTION"><Text>Corvanthia</Text></Row>
+		<Row Tag="LOC_CONTINENT_DELVORIA_DESCRIPTION"><Text>Delvoria</Text></Row>
+		<Row Tag="LOC_CONTINENT_ETHRANDOR_DESCRIPTION"><Text>Ethrandor</Text></Row>
+		<Row Tag="LOC_CONTINENT_FYRMANDEL_DESCRIPTION"><Text>Fyrmandel</Text></Row>
+		<Row Tag="LOC_CONTINENT_GALDORIA_DESCRIPTION"><Text>Galdoria</Text></Row>
+		<Row Tag="LOC_CONTINENT_HELYNDRA_DESCRIPTION"><Text>Helyndra</Text></Row>
+		<Row Tag="LOC_CONTINENT_ISTARIX_DESCRIPTION"><Text>Istarix</Text></Row>
+		<Row Tag="LOC_CONTINENT_JORMANDYR_DESCRIPTION"><Text>Jormandyr</Text></Row>
+		<Row Tag="LOC_CONTINENT_KALDORIX_DESCRIPTION"><Text>Kaldorix</Text></Row>
+		<Row Tag="LOC_CONTINENT_LORATHIAN_DESCRIPTION"><Text>Lorathian</Text></Row>
+		<Row Tag="LOC_CONTINENT_MALDORATH_DESCRIPTION"><Text>Maldorath</Text></Row>
+		<Row Tag="LOC_CONTINENT_NETHRANDOR_DESCRIPTION"><Text>Nethrandor</Text></Row>
+	</EnglishText>
+</Database>
