@@ -560,6 +560,9 @@ async function generateMap() {
   let landTiles = 0;
   let waterTiles = 0;
 
+  // Track tiles per landmass for island analysis
+  const landmassTileCounts = new Map();  // landmassId -> tile count
+
   // Build a kd-tree of landmass tiles for coast region assignment (like base game voronoi)
   const landmassKdTree = new kdTree((tile) => tile.pos);
   landmassKdTree.build(tiles.flatMap((row) => row.filter((tile) => tile.landmassId > 0)));
@@ -577,6 +580,10 @@ async function generateMap() {
           : globals.g_FlatTerrain;
         TerrainBuilder.setTerrainType(x, y, type);
         landTiles++;
+
+        // Track tile count per landmass for island analysis
+        const currentCount = landmassTileCounts.get(tile.landmassId) || 0;
+        landmassTileCounts.set(tile.landmassId, currentCount + 1);
 
         // Set landmass region ID (critical for distant lands mechanic!)
         // landmassId 1 = WEST (primary hemisphere / homelands)
@@ -623,6 +630,47 @@ async function generateMap() {
   const landPercent = (landTiles / totalTiles * 100).toFixed(1);
   const waterPercent = (waterTiles / totalTiles * 100).toFixed(1);
   console.log(`[ContinentsPP] Land/Water: ${landPercent}% land / ${waterPercent}% water`);
+
+  // Island Analysis: Categorize landmasses by size
+  // Major continents are the first N landmasses (where N = configured landmassCount)
+  // Smaller landmasses are islands (coastal or mid-ocean)
+  const sortedLandmasses = Array.from(landmassTileCounts.entries())
+    .sort((a, b) => b[1] - a[1]);  // Sort by tile count descending
+
+  const configuredContinents = randomConfig.landmassCount;
+  let continentTiles = 0;
+  let islandTiles = 0;
+  let islandCount = 0;
+
+  console.log(`[ContinentsPP] === LANDMASS ANALYSIS ===`);
+  for (let i = 0; i < sortedLandmasses.length; i++) {
+    const [landmassId, tileCount] = sortedLandmasses[i];
+    const percentOfLand = (tileCount / landTiles * 100).toFixed(1);
+
+    if (i < configuredContinents) {
+      // Major continent
+      continentTiles += tileCount;
+      console.log(`[ContinentsPP]   Continent ${i + 1} (ID ${landmassId}): ${tileCount} tiles (${percentOfLand}% of land)`);
+    } else {
+      // Island
+      islandTiles += tileCount;
+      islandCount++;
+      if (islandCount <= 10) {  // Log first 10 islands individually
+        console.log(`[ContinentsPP]   Island ${islandCount} (ID ${landmassId}): ${tileCount} tiles (${percentOfLand}% of land)`);
+      }
+    }
+  }
+
+  if (islandCount > 10) {
+    console.log(`[ContinentsPP]   ... and ${islandCount - 10} more small islands`);
+  }
+
+  const islandPercentOfLand = landTiles > 0 ? (islandTiles / landTiles * 100).toFixed(1) : 0;
+  const continentPercentOfLand = landTiles > 0 ? (continentTiles / landTiles * 100).toFixed(1) : 0;
+  console.log(`[ContinentsPP] === SUMMARY ===`);
+  console.log(`[ContinentsPP]   Continents: ${configuredContinents} (${continentTiles} tiles, ${continentPercentOfLand}% of land)`);
+  console.log(`[ContinentsPP]   Islands: ${islandCount} (${islandTiles} tiles, ${islandPercentOfLand}% of land)`);
+  console.log(`[ContinentsPP]   Island ratio: ${islandCount > 0 ? (islandTiles / continentTiles * 100).toFixed(1) : 0}% of continent size`);
 
   //────────────────────────────────────────────────────────────────────────────
   // TERRAIN PROCESSING
