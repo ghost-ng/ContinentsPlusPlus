@@ -104,12 +104,16 @@ const MAP_SIZE_CONFIGS = {
     landmassCount: { min: 3, max: 4 },            // 3-4 continents
     totalLandmassSize: { min: 20, max: 26 },      // ~29% land (71% water)
     erosionPercent: { min: 6, max: 10 },
-    // Coastal islands (near continents)
-    coastalIslands: { min: 4, max: 8 },
+    // Coastal islands (near continents) - increased ~25%
+    coastalIslands: { min: 5, max: 10 },
     coastalIslandSize: { min: 1.0, max: 1.6 },
-    // Ocean islands
-    islandTotalSize: { min: 2, max: 4 },
+    // Ocean islands - increased ~30%
+    islandTotalSize: { min: 3, max: 5 },
     islandVariance: { min: 1, max: 2 },
+    // Island spacing (randomized for variety)
+    islandDistance: { min: 1, max: 3 },           // Min distance between islands (low = chains)
+    landmassDistance: { min: 3, max: 5 },         // Min distance from continents (low = archipelagos)
+    islandMaxSize: { min: 1.2, max: 2.0 },        // Max individual island size
     // Terrain
     mountainPercent: { min: 10, max: 14 },
     mountainRandomize: { min: 25, max: 45 },
@@ -124,10 +128,13 @@ const MAP_SIZE_CONFIGS = {
     landmassCount: { min: 3, max: 5 },
     totalLandmassSize: { min: 22, max: 28 },
     erosionPercent: { min: 8, max: 12 },
-    coastalIslands: { min: 6, max: 10 },
+    coastalIslands: { min: 8, max: 13 },
     coastalIslandSize: { min: 1.2, max: 1.8 },
-    islandTotalSize: { min: 3, max: 5 },
+    islandTotalSize: { min: 4, max: 7 },
     islandVariance: { min: 1.5, max: 3 },
+    islandDistance: { min: 1, max: 3 },
+    landmassDistance: { min: 3, max: 6 },
+    islandMaxSize: { min: 1.4, max: 2.2 },
     mountainPercent: { min: 10, max: 15 },
     mountainRandomize: { min: 25, max: 45 },
     continentSeparation: { min: 4, max: 7 },
@@ -140,10 +147,13 @@ const MAP_SIZE_CONFIGS = {
     landmassCount: { min: 4, max: 5 },
     totalLandmassSize: { min: 24, max: 30 },
     erosionPercent: { min: 10, max: 14 },
-    coastalIslands: { min: 8, max: 14 },
+    coastalIslands: { min: 10, max: 18 },
     coastalIslandSize: { min: 1.4, max: 2.0 },
-    islandTotalSize: { min: 4, max: 7 },
+    islandTotalSize: { min: 5, max: 9 },
     islandVariance: { min: 2, max: 4 },
+    islandDistance: { min: 1, max: 4 },
+    landmassDistance: { min: 3, max: 6 },
+    islandMaxSize: { min: 1.5, max: 2.5 },
     mountainPercent: { min: 11, max: 15 },
     mountainRandomize: { min: 30, max: 50 },
     continentSeparation: { min: 5, max: 7 },
@@ -156,10 +166,13 @@ const MAP_SIZE_CONFIGS = {
     landmassCount: { min: 4, max: 6 },
     totalLandmassSize: { min: 26, max: 34 },
     erosionPercent: { min: 12, max: 16 },
-    coastalIslands: { min: 10, max: 18 },
+    coastalIslands: { min: 13, max: 23 },
     coastalIslandSize: { min: 1.6, max: 2.2 },
-    islandTotalSize: { min: 5, max: 9 },
+    islandTotalSize: { min: 7, max: 12 },
     islandVariance: { min: 2.5, max: 5 },
+    islandDistance: { min: 1, max: 4 },
+    landmassDistance: { min: 4, max: 7 },
+    islandMaxSize: { min: 1.8, max: 3.0 },
     mountainPercent: { min: 11, max: 16 },
     mountainRandomize: { min: 30, max: 50 },
     continentSeparation: { min: 5, max: 8 },
@@ -172,10 +185,13 @@ const MAP_SIZE_CONFIGS = {
     landmassCount: { min: 5, max: 7 },
     totalLandmassSize: { min: 28, max: 38 },
     erosionPercent: { min: 14, max: 18 },
-    coastalIslands: { min: 14, max: 22 },
+    coastalIslands: { min: 18, max: 28 },
     coastalIslandSize: { min: 1.8, max: 2.6 },
-    islandTotalSize: { min: 6, max: 12 },
+    islandTotalSize: { min: 8, max: 16 },
     islandVariance: { min: 3, max: 6 },
+    islandDistance: { min: 1, max: 4 },
+    landmassDistance: { min: 4, max: 7 },
+    islandMaxSize: { min: 2.0, max: 3.5 },
     mountainPercent: { min: 12, max: 17 },
     mountainRandomize: { min: 30, max: 55 },
     continentSeparation: { min: 6, max: 8 },
@@ -241,6 +257,20 @@ function generateRandomizedConfig(mapSizeIndex, randomSeed) {
     baseConfig.separationFalloff.max
   );
 
+  // Randomize island spacing (controls chains vs scattered)
+  const islandDistance = randomInt(random,
+    baseConfig.islandDistance.min,
+    baseConfig.islandDistance.max
+  );
+  const landmassDistance = randomInt(random,
+    baseConfig.landmassDistance.min,
+    baseConfig.landmassDistance.max
+  );
+  const islandMaxSize = randomRange(random,
+    baseConfig.islandMaxSize.min,
+    baseConfig.islandMaxSize.max
+  );
+
   // Generate landmass configurations for each continent
   const landmassConfigs = [];
   for (let i = 0; i < landmassCount; i++) {
@@ -269,16 +299,16 @@ function generateRandomizedConfig(mapSizeIndex, randomSeed) {
     // Landmass configurations (one per continent)
     landmass: landmassConfigs,
 
-    // Island configuration (mid-ocean)
+    // Island configuration (mid-ocean) - randomized for variety
     island: {
       totalSize: islandTotalSize,
       variance: islandVariance,
       meridianDistance: 2 + mapSizeIndex,
-      landmassDistance: 4 + mapSizeIndex,
-      islandDistance: 2 + Math.floor(mapSizeIndex / 2),
+      landmassDistance: landmassDistance,       // Randomized: low = closer to continents
+      islandDistance: islandDistance,           // Randomized: low = chains, high = scattered
       erosionPercent: Math.min(15, 10 + mapSizeIndex * 2),
       minSize: 0.3,
-      maxSize: 1.5 + mapSizeIndex * 0.3,
+      maxSize: islandMaxSize,                   // Randomized: varies island sizes
     },
 
     // Mountain configuration
@@ -307,6 +337,7 @@ function generateRandomizedConfig(mapSizeIndex, randomSeed) {
   console.log(`[ContinentsPP] Erosion per continent: ${config.landmass.map(l => l.erosionPercent + '%').join(', ')}`);
   console.log(`[ContinentsPP] Coastal islands per continent: ${config.landmass.map(l => l.coastalIslands).join(', ')}`);
   console.log(`[ContinentsPP] Mid-ocean islands: size=${config.island.totalSize.toFixed(1)}, variance=${config.island.variance.toFixed(1)}`);
+  console.log(`[ContinentsPP] Island spacing: islandDist=${config.island.islandDistance}, landmassDist=${config.island.landmassDistance}, maxSize=${config.island.maxSize.toFixed(1)}`);
   console.log(`[ContinentsPP] Mountains: ${config.mountain.percent}% (randomize: ${config.mountain.randomize})`);
   console.log(`[ContinentsPP] Continent separation: minDistance=${config.continentSeparation}, falloff=${config.separationFalloff}`);
 
