@@ -113,6 +113,9 @@ const MAP_SIZE_CONFIGS = {
     // Terrain
     mountainPercent: { min: 10, max: 14 },
     mountainRandomize: { min: 25, max: 45 },
+    // Continent separation (ocean distance between landmasses)
+    continentSeparation: { min: 4, max: 6 },      // minDistance for RuleAvoidOtherRegions
+    separationFalloff: { min: 3, max: 5 },        // distanceFalloff soft buffer
   },
 
   // Index 1: SMALL (4-6 players)
@@ -127,6 +130,8 @@ const MAP_SIZE_CONFIGS = {
     islandVariance: { min: 1.5, max: 3 },
     mountainPercent: { min: 10, max: 15 },
     mountainRandomize: { min: 25, max: 45 },
+    continentSeparation: { min: 4, max: 7 },
+    separationFalloff: { min: 3, max: 5 },
   },
 
   // Index 2: STANDARD (6-8 players)
@@ -141,6 +146,8 @@ const MAP_SIZE_CONFIGS = {
     islandVariance: { min: 2, max: 4 },
     mountainPercent: { min: 11, max: 15 },
     mountainRandomize: { min: 30, max: 50 },
+    continentSeparation: { min: 5, max: 7 },
+    separationFalloff: { min: 3, max: 6 },
   },
 
   // Index 3: LARGE (8-10 players)
@@ -155,6 +162,8 @@ const MAP_SIZE_CONFIGS = {
     islandVariance: { min: 2.5, max: 5 },
     mountainPercent: { min: 11, max: 16 },
     mountainRandomize: { min: 30, max: 50 },
+    continentSeparation: { min: 5, max: 8 },
+    separationFalloff: { min: 4, max: 6 },
   },
 
   // Index 4: HUGE (10-12 players)
@@ -169,6 +178,8 @@ const MAP_SIZE_CONFIGS = {
     islandVariance: { min: 3, max: 6 },
     mountainPercent: { min: 12, max: 17 },
     mountainRandomize: { min: 30, max: 55 },
+    continentSeparation: { min: 6, max: 8 },
+    separationFalloff: { min: 4, max: 7 },
   }
 };
 
@@ -218,6 +229,16 @@ function generateRandomizedConfig(mapSizeIndex, randomSeed) {
   const mountainRandomize = randomInt(random,
     baseConfig.mountainRandomize.min,
     baseConfig.mountainRandomize.max
+  );
+
+  // Randomize continent separation (ocean distance between landmasses)
+  const continentSeparation = randomInt(random,
+    baseConfig.continentSeparation.min,
+    baseConfig.continentSeparation.max
+  );
+  const separationFalloff = randomInt(random,
+    baseConfig.separationFalloff.min,
+    baseConfig.separationFalloff.max
   );
 
   // Generate landmass configurations for each continent
@@ -273,7 +294,11 @@ function generateRandomizedConfig(mapSizeIndex, randomSeed) {
       percent: 8 + mapSizeIndex,
       variance: 3 + mapSizeIndex,
       randomize: 8 + mapSizeIndex * 2,
-    }
+    },
+
+    // Continent separation (ocean distance between landmasses)
+    continentSeparation: continentSeparation,
+    separationFalloff: separationFalloff,
   };
 
   // Log the randomized configuration
@@ -283,6 +308,7 @@ function generateRandomizedConfig(mapSizeIndex, randomSeed) {
   console.log(`[ContinentsPP] Coastal islands per continent: ${config.landmass.map(l => l.coastalIslands).join(', ')}`);
   console.log(`[ContinentsPP] Mid-ocean islands: size=${config.island.totalSize.toFixed(1)}, variance=${config.island.variance.toFixed(1)}`);
   console.log(`[ContinentsPP] Mountains: ${config.mountain.percent}% (randomize: ${config.mountain.randomize})`);
+  console.log(`[ContinentsPP] Continent separation: minDistance=${config.continentSeparation}, falloff=${config.separationFalloff}`);
 
   return config;
 }
@@ -485,12 +511,12 @@ async function generateMap() {
         rule.configValues.poleDistanceFalloff = 3;  // Reduced from 6 to allow land closer to poles
         console.log(`[ContinentsPP] Set pole avoidance: poleDistance=${rule.configValues.poleDistance}, falloff=${rule.configValues.poleDistanceFalloff}`);
       }
-      // Increase minimum ocean distance between continents (default is 4)
+      // Randomized ocean distance between continents (varies per map for unpredictability)
       // minDistance: minimum guaranteed ocean tiles between landmasses
       // distanceFalloff: soft buffer that discourages growth toward other continents
       if (rule.name == RuleAvoidOtherRegions.getName()) {
-        rule.configValues.minDistance = 5;        // Minimum 5 ocean tiles between continents
-        rule.configValues.distanceFalloff = 4;    // Soft buffer extends to 9 tiles total
+        rule.configValues.minDistance = randomConfig.continentSeparation;
+        rule.configValues.distanceFalloff = randomConfig.separationFalloff;
         console.log(`[ContinentsPP] Set continent separation: minDistance=${rule.configValues.minDistance}, falloff=${rule.configValues.distanceFalloff}`);
       }
     }
