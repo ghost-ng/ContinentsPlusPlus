@@ -23,11 +23,12 @@ console.log("Generating using script Continents++ (Voronoi Edition)");
 // Voronoi plate tectonics system - using UnifiedContinentsBase for dynamic landmass count
 import { UnifiedContinentsBase } from '/base-standard/scripts/voronoi_maps/unified-continents-base.js';
 import { RuleAvoidEdge } from '/base-standard/scripts/voronoi_rules/avoid-edge.js';
+import { RuleAvoidOtherRegions } from '/base-standard/scripts/voronoi_rules/avoid-other-regions.js';
 import { kdTree, TerrainType, WrapType } from '/base-standard/scripts/kd-tree.js';
 import { GeneratorType } from '/base-standard/scripts/voronoi_generators/map-generator.js';
 
-// Starting position assignment
-import { assignStartPositions, chooseStartSectors } from '/ContinentsPlusPlus/modules/maps/assign-starting-plots.js';
+// Starting position assignment - use tile-based approach for Voronoi maps
+import { PlayerRegion, assignStartPositionsFromTiles } from '/base-standard/maps/assign-starting-plots.js';
 
 // Base game terrain generation
 import { addMountains, addHills, buildRainfallMap, generateLakes } from '/base-standard/maps/elevation-terrain-generator.js';
@@ -290,27 +291,6 @@ function generateRandomizedConfig(mapSizeIndex, randomSeed) {
 //──────────────────────────────────────────────────────────────────────────────
 
 /**
- * Calculates hemisphere boundaries for resource and start position assignment
- */
-function calculateHemisphereBounds(iWidth, iHeight) {
-  const midpoint = Math.floor(iWidth / 2);
-  return {
-    west: {
-      west: globals.g_AvoidSeamOffset,
-      east: midpoint,
-      south: globals.g_PolarWaterRows,
-      north: iHeight - globals.g_PolarWaterRows
-    },
-    east: {
-      west: midpoint,
-      east: iWidth - globals.g_AvoidSeamOffset,
-      south: globals.g_PolarWaterRows,
-      north: iHeight - globals.g_PolarWaterRows
-    }
-  };
-}
-
-/**
  * Applies randomized configuration to generator settings
  * Called AFTER init() - modifies individual landmass properties but NOT array length
  * (landmassCount and totalLandmassSize must be set in m_settings BEFORE init())
@@ -398,13 +378,9 @@ async function generateMap() {
   }
 
   // Retrieve base map parameters
-  const iNumPlayers1 = mapInfo.PlayersLandmass1;
-  const iNumPlayers2 = mapInfo.PlayersLandmass2;
   const iTotalPlayers = Players.getAliveMajorIds().length;
   const iNumNaturalWonders = mapInfo.NumNaturalWonders;
   const iTilesPerLake = mapInfo.LakeGenerationFrequency;
-  const iStartSectorRows = mapInfo.StartSectorRows;
-  const iStartSectorCols = mapInfo.StartSectorCols;
   const mapSizeIndex = mapInfo.$index;
 
   console.log(`[ContinentsPP] Map size: ${MAP_SIZE_CONFIGS[mapSizeIndex]?.name || 'UNKNOWN'} (index: ${mapSizeIndex})`);
@@ -498,15 +474,32 @@ async function generateMap() {
   console.log(`[ContinentsPP] Post-init landmass count: ${generatorSettings.landmass.length}`);
   applyRandomizedConfig(generatorSettings, randomConfig);
 
-  // Configure pole distance rule (keep land away from poles)
+  // Configure Voronoi rules for continent generation
   const rules = voronoiMap.getGenerator().getRules();
   for (const value of Object.values(rules)) {
     for (const rule of value) {
+      // Keep land away from poles
       if (rule.name == RuleAvoidEdge.getName()) {
         rule.configValues.poleDistance = globals.g_PolarWaterRows;
       }
+      // Increase minimum ocean distance between continents (default is 4)
+      // minDistance: minimum guaranteed ocean tiles between landmasses
+      // distanceFalloff: soft buffer that discourages growth toward other continents
+      if (rule.name == RuleAvoidOtherRegions.getName()) {
+        rule.configValues.minDistance = 5;        // Minimum 5 ocean tiles between continents
+        rule.configValues.distanceFalloff = 4;    // Soft buffer extends to 9 tiles total
+        console.log(`[ContinentsPP] Set continent separation: minDistance=${rule.configValues.minDistance}, falloff=${rule.configValues.distanceFalloff}`);
+      }
     }
   }
+
+  // Spread continents further apart by increasing spawn distance from center
+  // Default is 0.5-0.75, we use 0.65-0.85 for more ocean between continents
+  for (let i = 0; i < generatorSettings.landmass.length; i++) {
+    const baseDistance = 0.65 + (i * 0.05);  // Stagger distances slightly
+    generatorSettings.landmass[i].spawnCenterDistance = Math.min(0.85, baseDistance);
+  }
+  console.log(`[ContinentsPP] Continent spawn distances: ${generatorSettings.landmass.map((l, i) => l.spawnCenterDistance.toFixed(2)).join(', ')}`);
 
   // Distribute players across continents evenly
   const landmassCount = generatorSettings.landmass.length;
@@ -523,12 +516,6 @@ async function generateMap() {
 
   const playerDistribution = generatorSettings.landmass.map((l, i) => `C${i+1}: ${l.playerAreas}`).join(', ');
   console.log(`[ContinentsPP] Player distribution: ${playerDistribution}`);
-
-  // Calculate players per hemisphere for resource/start position APIs
-  // Split evenly (base game expects west/east hemisphere player counts)
-  const iActualPlayers1 = Math.ceil(iTotalPlayers / 2);
-  const iActualPlayers2 = iTotalPlayers - iActualPlayers1;
-  console.log(`[ContinentsPP] Hemisphere distribution: West=${iActualPlayers1}, East=${iActualPlayers2}`);
 
   console.log("[ContinentsPP] Running Voronoi simulation...");
 
@@ -612,8 +599,6 @@ async function generateMap() {
   // TERRAIN PROCESSING
   //────────────────────────────────────────────────────────────────────────────
 
-  const hemispheres = calculateHemisphereBounds(iWidth, iHeight);
-
   TerrainBuilder.validateAndFixTerrain();
   AreaBuilder.recalculateAreas();
   TerrainBuilder.stampContinents();
@@ -650,31 +635,6 @@ async function generateMap() {
   // START POSITIONS AND RESOURCES
   //────────────────────────────────────────────────────────────────────────────
 
-  console.log("[ContinentsPP] Assigning start positions (fertility-based)...");
-
-  // Read player distribution setting from game options
-  // 0 = Same Hemisphere (default), 1 = Fully Random, 2 = Separate Continents
-  let playerDistributionMode = 0;
-  try {
-    // Read from map configuration (set via map options UI dropdown)
-    const distribValue = Configuration.getMapValue("ContinentsPPPlayerDistribution");
-    if (distribValue !== undefined && distribValue !== null) {
-      playerDistributionMode = parseInt(distribValue);
-      console.log(`[ContinentsPP] Player distribution mode from settings: ${playerDistributionMode}`);
-    } else {
-      console.log("[ContinentsPP] Player distribution setting not found, using default (0 = Same Hemisphere)");
-    }
-  } catch (e) {
-    console.log(`[ContinentsPP] Could not read player distribution setting: ${e.message}`);
-  }
-
-  const distributionModeNames = ["Same Hemisphere", "Fully Random", "Separate Continents"];
-  console.log(`[ContinentsPP] Using distribution mode: ${distributionModeNames[playerDistributionMode] || "Unknown"}`);
-
-  // Empty start sectors array triggers fertility-based assignment
-  const startSectors = [];
-  dumpStartSectors(startSectors);
-
   // Debug output
   dumpContinents(iWidth, iHeight);
   dumpTerrain(iWidth, iHeight);
@@ -689,8 +649,56 @@ async function generateMap() {
   // Resource distribution uses LandmassRegionId set during terrain application
   generateResources(iWidth, iHeight);
 
-  startPositions = assignStartPositions(iActualPlayers1, iActualPlayers2, hemispheres.west, hemispheres.east,
-                                       iStartSectorRows, iStartSectorCols, startSectors, playerDistributionMode);
+  //────────────────────────────────────────────────────────────────────────────
+  // TILE-BASED START POSITION ASSIGNMENT (Voronoi-aware)
+  // This approach works correctly for all ages (Antiquity, Exploration, Modern)
+  // because it uses actual tile locations instead of geographic hemisphere bounds
+  //────────────────────────────────────────────────────────────────────────────
+
+  console.log("[ContinentsPP] Assigning start positions (tile-based for Voronoi maps)...");
+
+  // Create player areas using Voronoi's built-in fertility-based region creation
+  const fertilityGetter = (tile) => StartPositioner.getPlotFertilityForCoord(tile.coord.x, tile.coord.y);
+  voronoiMap.createMajorPlayerAreas(fertilityGetter);
+
+  // Build PlayerRegion objects from Voronoi tiles
+  const playerRegions = Array.from({ length: iTotalPlayers }, () => new PlayerRegion());
+  playerRegions.forEach((region, index) => {
+    region.regionId = index;
+  });
+
+  console.log(`[ContinentsPP] Creating ${iTotalPlayers} player regions from Voronoi tiles...`);
+
+  // Calculate offsets for each landmass (to map majorPlayerRegionId to global region index)
+  let offset = 0;
+  const offsets = [0].concat([
+    ...generatorSettings.landmass.map((n) => {
+      offset += n.playerAreas;
+      return offset;
+    })
+  ]);
+
+  // Assign tiles to player regions based on Voronoi's majorPlayerRegionId
+  for (const row of tiles) {
+    for (const tile of row) {
+      if (tile.majorPlayerRegionId >= 0 && tile.landmassId > 0) {
+        const regionId = tile.majorPlayerRegionId + offsets[tile.landmassId - 1];
+        if (regionId < playerRegions.length) {
+          const playerRegion = playerRegions[regionId];
+          playerRegion.landmassId = tile.landmassId - 1;
+          playerRegion.tiles.push({ x: tile.coord.x, y: tile.coord.y });
+        }
+      }
+    }
+  }
+
+  // Log region info
+  playerRegions.forEach((region, i) => {
+    console.log(`[ContinentsPP] Region ${i}: landmass=${region.landmassId}, tiles=${region.tiles.length}`);
+  });
+
+  // Use tile-based start position assignment (works correctly for all ages)
+  startPositions = assignStartPositionsFromTiles(playerRegions);
 
   console.log("[ContinentsPP] Generating discoveries...");
   generateDiscoveries(iWidth, iHeight, startPositions, globals.g_PolarWaterRows);
@@ -711,7 +719,8 @@ async function generateMap() {
   console.log("═══════════════════════════════════════════════════════════════");
   console.log("  CONTINENTS++ MAP GENERATION COMPLETE");
   console.log(`  Land: ${landPercent}% | Water: ${waterPercent}%`);
-  console.log(`  Players: ${iActualPlayers1} + ${iActualPlayers2} = ${iTotalPlayers}`);
+  console.log(`  Continents: ${landmassCount} | Players: ${iTotalPlayers}`);
+  console.log(`  Distribution: ${playerDistribution}`);
   console.log("═══════════════════════════════════════════════════════════════");
 }
 
