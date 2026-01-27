@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Mod id="ContinentsPlusPlus" version="1.2.7"
+<Mod id="ContinentsPlusPlus" version="1.3.0"
 	xmlns="ModInfo">
 	<Properties>
 		<Name>LOC_CONTINENTS_PLUS_PLUS_NAME</Name>
@@ -20,9 +20,11 @@
 			<Actions>
 				<UpdateText>
 					<Item>modules/text/en_us/MapText.xml</Item>
+					<Item>modules/text/en_us/ContinentNamesText.xml</Item>
 				</UpdateText>
 				<UpdateDatabase>
 					<Item>modules/config/AI_Naval_Override.xml</Item>
+					<Item>modules/config/ContinentNames.xml</Item>
 				</UpdateDatabase>
 				<ImportFiles>
 					<Item>modules/maps/assign-starting-plots.js</Item>
@@ -44,6 +46,7 @@
 	<LocalizedText>
 		<File>modules/text/en_us/ModuleText.xml</File>
 		<File>modules/text/en_us/MapText.xml</File>
+		<File>modules/text/en_us/ContinentNamesText.xml</File>
 	</LocalizedText>
 	<ScriptModules>
 		<Module path="modules/maps/assign-starting-plots.js" />
