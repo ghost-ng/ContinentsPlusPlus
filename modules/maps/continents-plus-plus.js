@@ -2401,59 +2401,71 @@ async function generateMap() {
   //────────────────────────────────────────────────────────────────────────────
   // HUMAN ISOLATION FIX
   // After assignment, check if human is alone on their continent
-  // If so (and no bridges), swap with an AI from a populated continent
+  // If so, swap with an AI from a populated continent
+  // CRITICAL: Use startPositions to determine actual continent, not playerRegions
   //────────────────────────────────────────────────────────────────────────────
 
   console.log(`[ContinentsPP] === POST-ASSIGNMENT HUMAN ISOLATION CHECK ===`);
 
-  // Build map of landmass -> players on it
-  const playersPerLandmass = new Map();  // landmassId -> [{playerIndex, isHuman}]
+  // Helper: get continent ID from plot index using game's continent stamping
+  const getGameContinentFromPlot = (plotIndex) => {
+    const x = plotIndex % iWidth;
+    const y = Math.floor(plotIndex / iWidth);
+    try {
+      return GameplayMap.getContinentType(x, y);
+    } catch (e) {
+      // Fallback to playerRegions landmassId
+      return -1;
+    }
+  };
+
+  // Build map of GAME CONTINENT -> players on it (using actual positions from startPositions)
+  const playersPerContinent = new Map();  // continentId -> [{playerIndex, isHuman, plotIndex}]
   for (let i = 0; i < aliveMajorIds.length; i++) {
     const playerId = aliveMajorIds[i];
-    const landmassId = playerRegions[i]?.landmassId ?? -1;
+    const plotIndex = startPositions[i];
+    const continentId = getGameContinentFromPlot(plotIndex);
     const isHuman = Players.isHuman(playerId);
 
-    if (landmassId >= 0) {
-      if (!playersPerLandmass.has(landmassId)) {
-        playersPerLandmass.set(landmassId, []);
+    if (continentId >= 0) {
+      if (!playersPerContinent.has(continentId)) {
+        playersPerContinent.set(continentId, []);
       }
-      playersPerLandmass.get(landmassId).push({ playerIndex: i, isHuman, playerId });
+      playersPerContinent.get(continentId).push({ playerIndex: i, isHuman, playerId, plotIndex });
     }
   }
 
-  // Log current distribution
-  for (const [landmassId, players] of playersPerLandmass) {
-    const humanCount = players.filter(p => p.isHuman).length;
-    const aiCount = players.filter(p => !p.isHuman).length;
-    console.log(`[ContinentsPP] Landmass ${landmassId}: ${players.length} players (${humanCount} human, ${aiCount} AI)`);
+  // Log current distribution by GAME continent
+  console.log(`[ContinentsPP] Distribution by GAME continent (after start position assignment):`);
+  for (const [continentId, players] of playersPerContinent) {
+    const hCount = players.filter(p => p.isHuman).length;
+    const aCount = players.filter(p => !p.isHuman).length;
+    console.log(`[ContinentsPP]   Continent ${continentId}: ${players.length} players (${hCount} human, ${aCount} AI)`);
   }
 
-  // Check if any human is alone
-  const inhabitedLandmasses = Array.from(playersPerLandmass.entries()).filter(([_, p]) => p.length > 0);
-  const bridgesExist = inhabitedLandmasses.length >= 2;
+  // Check if any human is alone on their continent
+  const inhabitedContinents = Array.from(playersPerContinent.entries()).filter(([_, p]) => p.length > 0);
+  const bridgesExist = inhabitedContinents.length >= 2;
 
-  for (const [landmassId, players] of playersPerLandmass) {
+  for (const [continentId, players] of playersPerContinent) {
     const humansHere = players.filter(p => p.isHuman);
-    const aisHere = players.filter(p => !p.isHuman);
 
     // Human is alone if: only 1 player total AND that player is human
     if (players.length === 1 && humansHere.length === 1) {
-      console.log(`[ContinentsPP] WARNING: Human alone on landmass ${landmassId}!`);
+      console.log(`[ContinentsPP] WARNING: Human alone on continent ${continentId}!`);
 
       if (!bridgesExist) {
-        console.log(`[ContinentsPP] No bridges exist (only ${inhabitedLandmasses.length} inhabited landmass)`);
-        // Only 1 inhabited landmass - need to ensure human has companion
-        // This shouldn't happen if our pre-assignment logic is correct, but handle it anyway
+        console.log(`[ContinentsPP] No bridges exist (only ${inhabitedContinents.length} inhabited continent)`);
       }
 
-      // Find an AI on a different landmass to swap with
+      // Find an AI on a continent with multiple players to swap with
       let swapTarget = null;
-      for (const [otherLandmassId, otherPlayers] of playersPerLandmass) {
-        if (otherLandmassId === landmassId) continue;
-        // Find landmass with multiple players (so we can steal one AI)
+      for (const [otherContinentId, otherPlayers] of playersPerContinent) {
+        if (otherContinentId === continentId) continue;
+        // Find continent with multiple players (so we can steal one AI)
         const otherAis = otherPlayers.filter(p => !p.isHuman);
         if (otherPlayers.length >= 2 && otherAis.length >= 1) {
-          swapTarget = { landmassId: otherLandmassId, ai: otherAis[0] };
+          swapTarget = { continentId: otherContinentId, ai: otherAis[0] };
           break;
         }
       }
@@ -2463,6 +2475,7 @@ async function generateMap() {
         const aiPlayer = swapTarget.ai;
 
         console.log(`[ContinentsPP] Swapping human (player ${humanPlayer.playerIndex}) with AI (player ${aiPlayer.playerIndex})`);
+        console.log(`[ContinentsPP]   Human was on continent ${continentId}, AI was on continent ${swapTarget.continentId}`);
 
         // Swap start positions
         const humanStartPos = startPositions[humanPlayer.playerIndex];
@@ -2470,7 +2483,21 @@ async function generateMap() {
         startPositions[humanPlayer.playerIndex] = aiStartPos;
         startPositions[aiPlayer.playerIndex] = humanStartPos;
 
-        console.log(`[ContinentsPP] Human now starts at plot ${aiStartPos} (was ${humanStartPos})`);
+        // Also swap in playerRegions for consistent tracking
+        const humanLandmass = playerRegions[humanPlayer.playerIndex]?.landmassId;
+        const aiLandmass = playerRegions[aiPlayer.playerIndex]?.landmassId;
+        if (playerRegions[humanPlayer.playerIndex]) {
+          playerRegions[humanPlayer.playerIndex].landmassId = aiLandmass;
+        }
+        if (playerRegions[aiPlayer.playerIndex]) {
+          playerRegions[aiPlayer.playerIndex].landmassId = humanLandmass;
+        }
+
+        const humanNewX = aiStartPos % iWidth;
+        const humanNewY = Math.floor(aiStartPos / iWidth);
+        const aiNewX = humanStartPos % iWidth;
+        const aiNewY = Math.floor(humanStartPos / iWidth);
+        console.log(`[ContinentsPP]   Human now at (${humanNewX}, ${humanNewY}), AI now at (${aiNewX}, ${aiNewY})`);
       } else {
         console.log(`[ContinentsPP] No suitable AI found to swap with - human may be isolated`);
       }
@@ -2692,6 +2719,7 @@ async function generateMap() {
   console.log(`[ContinentsPP]`);
 
   // Build final player info with continent data
+  // Use GAME's continent ID from actual position, not Voronoi landmassId
   const finalPlayerInfo = [];
   for (let i = 0; i < aliveMajorIds.length; i++) {
     const playerId = aliveMajorIds[i];
@@ -2699,7 +2727,17 @@ async function generateMap() {
     const isHuman = Players.isHuman(playerId);
     const x = plotIndex % iWidth;
     const y = Math.floor(plotIndex / iWidth);
-    const landmassId = playerRegions[i]?.landmassId ?? -1;
+
+    // Get GAME continent from actual position
+    let landmassId = -1;
+    let continentName = "Unknown";
+    try {
+      landmassId = GameplayMap.getContinentType(x, y);
+      continentName = GameplayMap.getContinentName(x, y) || `Continent ${landmassId}`;
+    } catch (e) {
+      landmassId = playerRegions[i]?.landmassId ?? -1;
+    }
+
     const continentSize = landmassTileCounts.get(landmassId) ?? 0;
     const isHomeland = continentIsInhabited.get(landmassId) ?? false;
 
@@ -2710,6 +2748,7 @@ async function generateMap() {
       x, y,
       plotIndex,
       landmassId,
+      continentName,
       continentSize,
       isHomeland
     });
@@ -2720,7 +2759,7 @@ async function generateMap() {
   for (const p of finalPlayerInfo) {
     const type = p.isHuman ? 'HUMAN' : 'AI';
     const region = p.isHomeland ? 'Homeland' : 'Distant';
-    console.log(`[ContinentsPP]   Player ${p.index} [${type}]: (${p.x}, ${p.y}) on Continent ${p.landmassId} (${p.continentSize} tiles, ${region})`);
+    console.log(`[ContinentsPP]   P${p.index}: (${p.x}, ${p.y}) on continent ${p.continentName} (landmass ${p.landmassId}) - ${type}`);
   }
   console.log(`[ContinentsPP]`);
 
