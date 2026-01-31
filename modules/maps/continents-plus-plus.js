@@ -1182,12 +1182,15 @@ async function generateMap() {
   }
 
   const DISTRIBUTION_MODE_NAMES = ['Clustered', 'Spread', 'Random'];
+  const originalMode = playerDistributionMode;
 
   // SINGLE HUMAN OVERRIDE: Clustered/Spread modes only make sense with multiple humans
-  // Force Mode 2 (Random) for single human - the companion/bridge logic in Mode 2 handles safety
-  if (humanCount === 1 && playerDistributionMode !== 2) {
-    console.log(`[ContinentsPP] Player Distribution Mode: ${playerDistributionMode} (${DISTRIBUTION_MODE_NAMES[playerDistributionMode]}) → overriding to 2 (Random) for single human`);
+  // Force Mode 2 (Random) for single human or all-AI games
+  // The companion/bridge logic in Mode 2 handles safety for isolated players
+  if (humanCount <= 1 && playerDistributionMode !== 2) {
     playerDistributionMode = 2;
+    console.log(`[ContinentsPP] Player Distribution Mode: ${originalMode} (${DISTRIBUTION_MODE_NAMES[originalMode]}) → OVERRIDE to 2 (Random)`);
+    console.log(`[ContinentsPP]   Reason: ${humanCount === 0 ? 'No human players' : 'Single human player'} - Clustered/Spread only apply to multiplayer`);
   } else {
     console.log(`[ContinentsPP] Player Distribution Mode: ${playerDistributionMode} (${DISTRIBUTION_MODE_NAMES[playerDistributionMode] || 'Unknown'})`);
   }
