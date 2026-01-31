@@ -12,7 +12,7 @@
 			<Text>Human Player Distribution</Text>
 		</Row>
 		<Row Tag="LOC_CPP_PLAYER_DISTRIBUTION_DESC">
-			<Text>Controls how human players are placed relative to each other and to distant lands.</Text>
+			<Text>Controls how human players are placed relative to each other in multiplayer. Single-player games use Random distribution automatically.</Text>
 		</Row>
 		<!-- Distribution Mode 0: Clustered -->
 		<Row Tag="LOC_CPP_DISTRIB_CLUSTERED">

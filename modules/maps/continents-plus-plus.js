@@ -1182,7 +1182,15 @@ async function generateMap() {
   }
 
   const DISTRIBUTION_MODE_NAMES = ['Clustered', 'Spread', 'Random'];
-  console.log(`[ContinentsPP] Player Distribution Mode: ${playerDistributionMode} (${DISTRIBUTION_MODE_NAMES[playerDistributionMode] || 'Unknown'})`);
+
+  // SINGLE HUMAN OVERRIDE: Clustered/Spread modes only make sense with multiple humans
+  // Force Mode 2 (Random) for single human - the companion/bridge logic in Mode 2 handles safety
+  if (humanCount === 1 && playerDistributionMode !== 2) {
+    console.log(`[ContinentsPP] Player Distribution Mode: ${playerDistributionMode} (${DISTRIBUTION_MODE_NAMES[playerDistributionMode]}) → overriding to 2 (Random) for single human`);
+    playerDistributionMode = 2;
+  } else {
+    console.log(`[ContinentsPP] Player Distribution Mode: ${playerDistributionMode} (${DISTRIBUTION_MODE_NAMES[playerDistributionMode] || 'Unknown'})`);
+  }
 
   // Get map seed for reproducible randomization
   const mapSeed = GameplayMap.getRandomSeed();
