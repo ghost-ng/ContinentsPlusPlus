@@ -299,38 +299,53 @@ function addCorridorIslands(iWidth, iHeight, mapSeed, continentIsInhabited, tile
         ];
         const primaryDir = directions[Math.floor(random() * directions.length)];
 
-        // Grow the chain
+        // Grow the chain - use 3-tile spacing for island chain
         for (let c = 1; c < chainLength; c++) {
           const last = chain[chain.length - 1];
 
-          // Try to continue in primary direction with some variance
-          const candidates = [];
-          for (const dir of directions) {
-            // Prefer primary direction
-            const alignment = dir.dx * primaryDir.dx + dir.dy * primaryDir.dy;
-            if (alignment < 0) continue; // Skip opposite directions
+          // Try multiple spacings: prefer 3-tile, then 2-tile, then adjacent
+          const spacings = [3, 2, 4];
+          let foundCandidate = false;
 
-            const nx = (last.x + dir.dx * 2 + iWidth) % iWidth; // Skip one tile for spacing
-            const ny = last.y + dir.dy * 2;
+          for (const spacing of spacings) {
+            if (foundCandidate) break;
 
-            if (ny < 2 || ny >= iHeight - 2) continue;
+            const candidates = [];
+            for (const dir of directions) {
+              const nx = (last.x + dir.dx * spacing + iWidth) % iWidth;
+              const ny = last.y + dir.dy * spacing;
 
-            const tile = tiles[ny]?.[nx];
-            if (!tile || tile.isLand()) continue;  // Skip if land or out of bounds
+              if (ny < 2 || ny >= iHeight - 2) continue;
 
-            const key = `${nx},${ny}`;
-            if (usedPositions.has(key)) continue;
-            if (chain.some(t => t.x === nx && t.y === ny)) continue;
+              const tile = tiles[ny]?.[nx];
+              if (!tile || tile.isLand()) continue;  // Skip if land or out of bounds
 
-            candidates.push({ x: nx, y: ny, alignment });
+              const key = `${nx},${ny}`;
+              if (usedPositions.has(key)) continue;
+              if (chain.some(t => t.x === nx && t.y === ny)) continue;
+
+              // Check distance from land for this candidate too
+              const distLand = distanceToLand(nx, ny);
+              if (distLand < MIN_DIST_FROM_LAND) continue;
+
+              // Alignment bonus (prefer continuing in same direction)
+              const alignment = dir.dx * primaryDir.dx + dir.dy * primaryDir.dy;
+              candidates.push({ x: nx, y: ny, alignment, distLand });
+            }
+
+            if (candidates.length > 0) {
+              // Sort by alignment, then by distance from land (prefer middle of ocean)
+              candidates.sort((a, b) => {
+                if (b.alignment !== a.alignment) return b.alignment - a.alignment;
+                return b.distLand - a.distLand;
+              });
+              const pick = candidates[Math.floor(random() * Math.min(3, candidates.length))];
+              chain.push(pick);
+              foundCandidate = true;
+            }
           }
 
-          if (candidates.length === 0) break;
-
-          // Weight by alignment
-          candidates.sort((a, b) => b.alignment - a.alignment);
-          const pick = candidates[Math.floor(random() * Math.min(3, candidates.length))];
-          chain.push(pick);
+          if (!foundCandidate) break;
         }
 
         // Convert chain tiles to land (each island in chain is 3-6 tiles)
@@ -340,31 +355,39 @@ function addCorridorIslands(iWidth, iHeight, mapSeed, continentIsInhabited, tile
           const islandTiles = [{ x: islandCenter.x, y: islandCenter.y }];
 
           // Grow island outward from center (proper island, not atoll)
+          // Try multiple times per growth step for robustness
           for (let t = 1; t < islandSize; t++) {
-            // Pick a random existing tile to grow from
-            const growFrom = islandTiles[Math.floor(random() * islandTiles.length)];
-            const growDirs = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]];
+            let foundGrowth = false;
 
-            // Shuffle for variety
-            for (let i = growDirs.length - 1; i > 0; i--) {
-              const j = Math.floor(random() * (i + 1));
-              [growDirs[i], growDirs[j]] = [growDirs[j], growDirs[i]];
-            }
+            // Try from multiple existing tiles if first attempt fails
+            for (let attempt = 0; attempt < islandTiles.length && !foundGrowth; attempt++) {
+              const growFrom = islandTiles[(Math.floor(random() * islandTiles.length) + attempt) % islandTiles.length];
+              const growDirs = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]];
 
-            for (const dir of growDirs) {
-              const nx = (growFrom.x + dir[0] + iWidth) % iWidth;
-              const ny = growFrom.y + dir[1];
+              // Shuffle for variety
+              for (let i = growDirs.length - 1; i > 0; i--) {
+                const j = Math.floor(random() * (i + 1));
+                [growDirs[i], growDirs[j]] = [growDirs[j], growDirs[i]];
+              }
 
-              if (ny < 2 || ny >= iHeight - 2) continue;
+              for (const dir of growDirs) {
+                const nx = (growFrom.x + dir[0] + iWidth) % iWidth;
+                const ny = growFrom.y + dir[1];
 
-              // Check not already in island
-              if (islandTiles.some(it => it.x === nx && it.y === ny)) continue;
+                if (ny < 2 || ny >= iHeight - 2) continue;
 
-              // Check valid terrain (must be water to expand into)
-              const tile = tiles[ny]?.[nx];
-              if (tile && !tile.isLand()) {
-                islandTiles.push({ x: nx, y: ny });
-                break;
+                // Check not already in island or used
+                if (islandTiles.some(it => it.x === nx && it.y === ny)) continue;
+                if (usedPositions.has(`${nx},${ny}`)) continue;
+
+                // Check valid terrain - use terrainType for consistency with corridor selection
+                // Must be water (Ocean or Coast) to expand into
+                const tile = tiles[ny]?.[nx];
+                if (tile && (tile.terrainType === TerrainType.Ocean || tile.terrainType === TerrainType.Coast || !tile.isLand())) {
+                  islandTiles.push({ x: nx, y: ny });
+                  foundGrowth = true;
+                  break;
+                }
               }
             }
           }
