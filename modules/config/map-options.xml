@@ -17,23 +17,23 @@
 	</Parameters>
 
 	<DomainValues>
-		<!-- Value 0: Same Hemisphere (Base Game Default) -->
+		<!-- Value 0: Clustered - humans on same/nearby continents -->
 		<Row Domain="ContinentsPPPlayerDistribDomain"
 			 Value="0"
-			 Name="LOC_CPP_DISTRIB_SAME_HEMISPHERE"
-			 Description="LOC_CPP_DISTRIB_SAME_HEMISPHERE_DESC"
+			 Name="LOC_CPP_DISTRIB_CLUSTERED"
+			 Description="LOC_CPP_DISTRIB_CLUSTERED_DESC"
 			 SortIndex="10"/>
-		<!-- Value 1: Fully Random Distribution -->
+		<!-- Value 1: Spread - humans on different continents, preserve distant lands -->
 		<Row Domain="ContinentsPPPlayerDistribDomain"
 			 Value="1"
-			 Name="LOC_CPP_DISTRIB_RANDOM"
-			 Description="LOC_CPP_DISTRIB_RANDOM_DESC"
+			 Name="LOC_CPP_DISTRIB_SPREAD"
+			 Description="LOC_CPP_DISTRIB_SPREAD_DESC"
 			 SortIndex="20"/>
-		<!-- Value 2: Separate Continents (when possible) -->
+		<!-- Value 2: Random - no special human handling -->
 		<Row Domain="ContinentsPPPlayerDistribDomain"
 			 Value="2"
-			 Name="LOC_CPP_DISTRIB_SEPARATE"
-			 Description="LOC_CPP_DISTRIB_SEPARATE_DESC"
+			 Name="LOC_CPP_DISTRIB_RANDOM"
+			 Description="LOC_CPP_DISTRIB_RANDOM_DESC"
 			 SortIndex="30"/>
 	</DomainValues>
 </Database>

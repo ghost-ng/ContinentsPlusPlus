@@ -9,31 +9,31 @@
 		</Row>
 		<!-- Player Distribution Option -->
 		<Row Tag="LOC_CPP_PLAYER_DISTRIBUTION">
-			<Text>Player Spawn Distribution</Text>
+			<Text>Human Player Distribution</Text>
 		</Row>
 		<Row Tag="LOC_CPP_PLAYER_DISTRIBUTION_DESC">
-			<Text>Controls how human and AI players are distributed across continents and hemispheres.</Text>
+			<Text>Controls how human players are placed relative to each other and to distant lands.</Text>
 		</Row>
-		<!-- Distribution Mode: Same Hemisphere -->
-		<Row Tag="LOC_CPP_DISTRIB_SAME_HEMISPHERE">
-			<Text>Same Hemisphere (Default)</Text>
+		<!-- Distribution Mode 0: Clustered -->
+		<Row Tag="LOC_CPP_DISTRIB_CLUSTERED">
+			<Text>Clustered (Default)</Text>
 		</Row>
-		<Row Tag="LOC_CPP_DISTRIB_SAME_HEMISPHERE_DESC">
-			<Text>Human players spawn in the same hemisphere. Standard Civilization behavior for team-based play.</Text>
+		<Row Tag="LOC_CPP_DISTRIB_CLUSTERED_DESC">
+			<Text>Human players spawn on the same or nearby continents. Ideal for cooperative and team-based play. Maximizes distant lands for shared exploration.</Text>
 		</Row>
-		<!-- Distribution Mode: Fully Random -->
+		<!-- Distribution Mode 1: Spread -->
+		<Row Tag="LOC_CPP_DISTRIB_SPREAD">
+			<Text>Spread</Text>
+		</Row>
+		<Row Tag="LOC_CPP_DISTRIB_SPREAD_DESC">
+			<Text>Human players spawn on different continents for competitive play. Always preserves at least one continent as distant lands for the exploration race.</Text>
+		</Row>
+		<!-- Distribution Mode 2: Random -->
 		<Row Tag="LOC_CPP_DISTRIB_RANDOM">
-			<Text>Fully Random</Text>
+			<Text>Random</Text>
 		</Row>
 		<Row Tag="LOC_CPP_DISTRIB_RANDOM_DESC">
-			<Text>All players are randomly distributed across all continents and hemispheres. Maximum unpredictability for competitive multiplayer.</Text>
-		</Row>
-		<!-- Distribution Mode: Separate Continents -->
-		<Row Tag="LOC_CPP_DISTRIB_SEPARATE">
-			<Text>Separate Continents</Text>
-		</Row>
-		<Row Tag="LOC_CPP_DISTRIB_SEPARATE_DESC">
-			<Text>Each player starts on their own continent when possible. Encourages naval expansion and exploration.</Text>
+			<Text>No special placement for humans. All players distributed proportionally by continent size. Maximum unpredictability.</Text>
 		</Row>
 	</EnglishText>
 </Database>
