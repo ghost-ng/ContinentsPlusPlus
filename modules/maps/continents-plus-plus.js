@@ -126,7 +126,7 @@ function distanceToLineSegmentWrapped(px, py, x1, y1, x2, y2, mapWidth) {
  * Adds island chains in the corridors between inhabited (homeland) continents
  * Creates stepping-stone archipelagos for naval travel between player start continents
  */
-function addCorridorIslands(iWidth, iHeight, mapSeed, continentIsInhabited, tiles, generatorSettings) {
+function addCorridorIslands(iWidth, iHeight, mapSeed, continentIsInhabited, tiles, generatorSettings, traversableTiles) {
   try {
     const random = createSeededRandom(mapSeed + 67890);
 
@@ -382,6 +382,8 @@ function addCorridorIslands(iWidth, iHeight, mapSeed, continentIsInhabited, tile
               usedPositions.add(key);
               tilesConverted++;
               islandTilesThisChain++;
+              // Add to traversable tiles for pathfinding
+              if (traversableTiles) traversableTiles.add(key);
             } catch (e) {
               // Skip on error
             }
@@ -419,7 +421,7 @@ function addCorridorIslands(iWidth, iHeight, mapSeed, continentIsInhabited, tile
  * Scans for ocean tiles far from land and randomly converts some to islands
  * Only runs 40-60% of the time for map variety
  */
-function addOpenOceanIslands(iWidth, iHeight, mapSeed, continentIsInhabited, majorContinentKdTree, tiles) {
+function addOpenOceanIslands(iWidth, iHeight, mapSeed, continentIsInhabited, majorContinentKdTree, tiles, traversableTiles) {
   try {
     const random = createSeededRandom(mapSeed + 12345);  // Different seed offset for variety
 
@@ -580,6 +582,8 @@ function addOpenOceanIslands(iWidth, iHeight, mapSeed, continentIsInhabited, maj
         }
 
         usedPositions.add(`${x},${y}`);
+        // Add to traversable tiles for pathfinding
+        if (traversableTiles) traversableTiles.add(`${x},${y}`);
         return true;
       } catch (e) {
         return false;
@@ -1709,6 +1713,9 @@ async function generateMap() {
   // Track tiles per landmass for island analysis
   const landmassTileCounts = new Map();  // landmassId -> tile count
 
+  // Track traversable tiles for Antiquity distance calculation (land + coast, not deep ocean)
+  const traversableTiles = new Set();  // "x,y" -> true for tiles walkable in early game
+
   // Build a kd-tree of landmass tiles for coast region assignment (like base game voronoi)
   const landmassKdTree = new kdTree((tile) => tile.pos);
   landmassKdTree.build(tiles.flatMap((row) => row.filter((tile) => tile.landmassId > 0)));
@@ -1743,6 +1750,7 @@ async function generateMap() {
           : globals.g_FlatTerrain;
         TerrainBuilder.setTerrainType(x, y, type);
         landTiles++;
+        traversableTiles.add(`${x},${y}`);  // Land is always traversable in Antiquity
 
         // Track tile count per landmass for island analysis
         const currentCount = landmassTileCounts.get(tile.landmassId) || 0;
@@ -1783,9 +1791,15 @@ async function generateMap() {
       } else {
         // Water tiles - Ocean is deep water, everything else is shallow/coastal
         // Base game logic: Ocean → OceanTerrain, else → CoastTerrain
-        const type = tile.terrainType === TerrainType.Ocean ? globals.g_OceanTerrain : globals.g_CoastTerrain;
+        const isDeepOcean = tile.terrainType === TerrainType.Ocean;
+        const type = isDeepOcean ? globals.g_OceanTerrain : globals.g_CoastTerrain;
         TerrainBuilder.setTerrainType(x, y, type);
         waterTiles++;
+
+        // Coast (shallow water) is traversable in Antiquity, deep ocean is not
+        if (!isDeepOcean) {
+          traversableTiles.add(`${x},${y}`);
+        }
 
         // Set landmass region for coast tiles (helps resource distribution near coasts)
         // Check if NOT deep ocean (shallow water near land)
@@ -2201,7 +2215,7 @@ async function generateMap() {
   // Creates stepping-stone archipelagos for naval travel between player starts
   //────────────────────────────────────────────────────────────────────────────
 
-  const corridorResult = addCorridorIslands(iWidth, iHeight, mapSeed, continentIsInhabited, tiles, generatorSettings);
+  const corridorResult = addCorridorIslands(iWidth, iHeight, mapSeed, continentIsInhabited, tiles, generatorSettings, traversableTiles);
   mapStats.corridorChains = corridorResult.chainsAdded;
   mapStats.corridorIslands = corridorResult.islandsAdded;
   mapStats.corridorTiles = corridorResult.tilesConverted;
@@ -2215,7 +2229,7 @@ async function generateMap() {
   // Scan for large empty ocean areas and add small islands
   //────────────────────────────────────────────────────────────────────────────
 
-  const oceanIslandResult = addOpenOceanIslands(iWidth, iHeight, mapSeed, continentIsInhabited, majorContinentKdTree, tiles);
+  const oceanIslandResult = addOpenOceanIslands(iWidth, iHeight, mapSeed, continentIsInhabited, majorContinentKdTree, tiles, traversableTiles);
   mapStats.islandCount += oceanIslandResult.islandsAdded;
   mapStats.islandTiles += oceanIslandResult.tilesConverted;
   mapStats.openOceanChains = oceanIslandResult.chainsAdded || 0;
@@ -2775,20 +2789,17 @@ async function generateMap() {
   console.log(`[ContinentsPP] (Walking distance via land + coastal tiles, no ocean crossing)`);
 
   // Helper: check if a tile is traversable in Antiquity (land or coastal water)
+  // Uses the traversableTiles Set built during terrain application
   const isAntiquityTraversable = (x, y) => {
     // Check bounds
     if (y < 0 || y >= iHeight) return false;
     // Wrap x
     const wx = ((x % iWidth) + iWidth) % iWidth;
-
-    // Get terrain type from the game map (after terrain has been applied)
-    const terrain = GameplayMap.getPlotTerrainType(wx, y);
-
-    // Traversable: anything that's not deep ocean
-    // Land terrains, coast, and shallow water are OK
-    // Only TERRAIN_OCEAN (deep ocean) blocks movement
-    return terrain !== globals.g_OceanTerrain;
+    // Check if in our tracked traversable tiles (land + coast, not deep ocean)
+    return traversableTiles.has(`${wx},${y}`);
   };
+
+  console.log(`[ContinentsPP] Traversable tiles for pathfinding: ${traversableTiles.size}`);
 
   // BFS from a starting position, returns distance map
   const bfsFromPosition = (startX, startY, maxDist = 100) => {
