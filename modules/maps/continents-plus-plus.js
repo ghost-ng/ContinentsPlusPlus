@@ -2764,6 +2764,155 @@ async function generateMap() {
     console.log(`[ContinentsPP]   Continent ${landmassId}: ${info.size} tiles, ${region}, ${playerStr}`);
   }
 
+  //────────────────────────────────────────────────────────────────────────────
+  // ANTIQUITY REACHABLE DISTANCE
+  // BFS to find actual walking distance via land + coastal tiles (no deep ocean)
+  // This is the "real" early-game distance between players
+  //────────────────────────────────────────────────────────────────────────────
+
+  console.log(`[ContinentsPP]`);
+  console.log(`[ContinentsPP] === ANTIQUITY REACHABLE DISTANCE ===`);
+  console.log(`[ContinentsPP] (Walking distance via land + coastal tiles, no ocean crossing)`);
+
+  // Helper: check if a tile is traversable in Antiquity (land or coastal water)
+  const isAntiquityTraversable = (x, y) => {
+    // Check bounds
+    if (y < 0 || y >= iHeight) return false;
+    // Wrap x
+    const wx = ((x % iWidth) + iWidth) % iWidth;
+
+    // Get terrain type from the game map (after terrain has been applied)
+    const terrain = GameplayMap.getPlotTerrainType(wx, y);
+
+    // Traversable: anything that's not deep ocean
+    // Land terrains, coast, and shallow water are OK
+    // Only TERRAIN_OCEAN (deep ocean) blocks movement
+    return terrain !== globals.g_OceanTerrain;
+  };
+
+  // BFS from a starting position, returns distance map
+  const bfsFromPosition = (startX, startY, maxDist = 100) => {
+    const distances = new Map();  // "x,y" -> distance
+    const queue = [{ x: startX, y: startY, dist: 0 }];
+    distances.set(`${startX},${startY}`, 0);
+
+    // 6 hex directions (offset coordinates)
+    const getNeighbors = (x, y) => {
+      const neighbors = [];
+      // Even/odd row affects neighbor offsets in hex grid
+      const isOddRow = y % 2 === 1;
+
+      // Standard hex neighbors
+      const offsets = isOddRow
+        ? [[-1, 0], [1, 0], [0, -1], [1, -1], [0, 1], [1, 1]]
+        : [[-1, 0], [1, 0], [-1, -1], [0, -1], [-1, 1], [0, 1]];
+
+      for (const [dx, dy] of offsets) {
+        const nx = ((x + dx) % iWidth + iWidth) % iWidth;
+        const ny = y + dy;
+        if (ny >= 0 && ny < iHeight) {
+          neighbors.push({ x: nx, y: ny });
+        }
+      }
+      return neighbors;
+    };
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (current.dist >= maxDist) continue;
+
+      for (const neighbor of getNeighbors(current.x, current.y)) {
+        const key = `${neighbor.x},${neighbor.y}`;
+        if (distances.has(key)) continue;  // Already visited
+
+        if (isAntiquityTraversable(neighbor.x, neighbor.y)) {
+          const newDist = current.dist + 1;
+          distances.set(key, newDist);
+          queue.push({ x: neighbor.x, y: neighbor.y, dist: newDist });
+        }
+      }
+    }
+
+    return distances;
+  };
+
+  // For each human player, calculate reachable distances to all other players
+  for (const human of humanPlayers) {
+    console.log(`[ContinentsPP]`);
+    console.log(`[ContinentsPP] Human P${human.index} at (${human.x}, ${human.y}):`);
+
+    // Run BFS from human's position
+    const distances = bfsFromPosition(human.x, human.y, 150);
+
+    // Check distance to each other player
+    const playerDistances = [];
+    for (const other of finalPlayerInfo) {
+      if (other.index === human.index) continue;
+
+      const otherKey = `${other.x},${other.y}`;
+      const reachableDist = distances.get(otherKey);
+      const straightDist = plotDistance(human.plotIndex, other.plotIndex);
+      const sameCont = human.landmassId === other.landmassId;
+
+      playerDistances.push({
+        playerIndex: other.index,
+        isHuman: other.isHuman,
+        x: other.x,
+        y: other.y,
+        reachableDist,
+        straightDist,
+        sameCont,
+        landmassId: other.landmassId
+      });
+    }
+
+    // Sort by reachable distance (unreachable last)
+    playerDistances.sort((a, b) => {
+      if (a.reachableDist === undefined && b.reachableDist === undefined) return 0;
+      if (a.reachableDist === undefined) return 1;
+      if (b.reachableDist === undefined) return -1;
+      return a.reachableDist - b.reachableDist;
+    });
+
+    // Log results
+    let reachableCount = 0;
+    let nearestReachable = null;
+
+    for (const pd of playerDistances) {
+      const type = pd.isHuman ? 'H' : 'A';
+      const contStr = pd.sameCont ? 'same' : `C${pd.landmassId}`;
+
+      if (pd.reachableDist !== undefined) {
+        reachableCount++;
+        if (!nearestReachable) nearestReachable = pd;
+        const ratio = (pd.reachableDist / pd.straightDist).toFixed(1);
+        console.log(`[ContinentsPP]   → P${pd.playerIndex}[${type}] (${pd.x},${pd.y}): ${pd.reachableDist} tiles walk (${pd.straightDist.toFixed(0)} straight, ${ratio}x) [${contStr}]`);
+      } else {
+        console.log(`[ContinentsPP]   → P${pd.playerIndex}[${type}] (${pd.x},${pd.y}): ❌ UNREACHABLE (${pd.straightDist.toFixed(0)} straight) [${contStr}]`);
+      }
+    }
+
+    // Summary for this human
+    console.log(`[ContinentsPP]`);
+    if (nearestReachable) {
+      const nearType = nearestReachable.isHuman ? 'Human' : 'AI';
+      console.log(`[ContinentsPP]   Nearest reachable: P${nearestReachable.playerIndex} (${nearType}) at ${nearestReachable.reachableDist} tiles`);
+      console.log(`[ContinentsPP]   Reachable players: ${reachableCount}/${playerDistances.length}`);
+
+      // Verdict
+      if (nearestReachable.reachableDist <= 15) {
+        console.log(`[ContinentsPP]   ✓ GOOD: Nearby neighbor within 15 tiles`);
+      } else if (nearestReachable.reachableDist <= 30) {
+        console.log(`[ContinentsPP]   ⚠️ OK: Nearest neighbor is ${nearestReachable.reachableDist} tiles (moderate distance)`);
+      } else {
+        console.log(`[ContinentsPP]   ⚠️ FAR: Nearest neighbor is ${nearestReachable.reachableDist} tiles (long journey)`);
+      }
+    } else {
+      console.log(`[ContinentsPP]   ❌ ISOLATED: No players reachable via land/coast!`);
+    }
+  }
+
+  console.log(`[ContinentsPP]`);
   console.log("[ContinentsPP] Generating discoveries...");
   generateDiscoveries(iWidth, iHeight, startPositions, globals.g_PolarWaterRows);
   dumpResources(iWidth, iHeight);
