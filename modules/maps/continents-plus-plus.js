@@ -299,12 +299,12 @@ function addCorridorIslands(iWidth, iHeight, mapSeed, continentIsInhabited, tile
         ];
         const primaryDir = directions[Math.floor(random() * directions.length)];
 
-        // Grow the chain - use 3-tile spacing for island chain
+        // Grow the chain - try spacings from small to large
         for (let c = 1; c < chainLength; c++) {
           const last = chain[chain.length - 1];
 
-          // Try multiple spacings: prefer 3-tile, then 2-tile, then adjacent
-          const spacings = [3, 2, 4];
+          // Try multiple spacings: 2, 3, 4, then even 1 (adjacent)
+          const spacings = [2, 3, 4, 1];
           let foundCandidate = false;
 
           for (const spacing of spacings) {
@@ -324,9 +324,9 @@ function addCorridorIslands(iWidth, iHeight, mapSeed, continentIsInhabited, tile
               if (usedPositions.has(key)) continue;
               if (chain.some(t => t.x === nx && t.y === ny)) continue;
 
-              // Check distance from land for this candidate too
+              // Relaxed distance check - just ensure not right next to land (1 tile buffer)
               const distLand = distanceToLand(nx, ny);
-              if (distLand < MIN_DIST_FROM_LAND) continue;
+              if (distLand < 1.5) continue;  // Much more relaxed than MIN_DIST_FROM_LAND
 
               // Alignment bonus (prefer continuing in same direction)
               const alignment = dir.dx * primaryDir.dx + dir.dy * primaryDir.dy;
