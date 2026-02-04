@@ -5,7 +5,7 @@
 			<Text>Continents++</Text>
 		</Row>
 		<Row Tag="LOC_CONTINENTS_PLUS_PLUS_DESCRIPTION">
-			<Text>Enhanced map generation with randomized Earth-like continents, fractal coastlines, and unique layouts every game</Text>
+			<Text>Every map is unique. Generates Earth-like continents with fractal coastlines, scattered archipelagos, and asymmetric landmass sizes. Parameters randomized each game for maximum replayability.</Text>
 		</Row>
 	</EnglishText>
 </Database>

@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Database>
-	<!-- Player Distribution Options for Continents++ -->
+	<!-- Map Options for Continents++ -->
 	<Parameters>
+		<!-- Continent Count Option -->
+		<Row ParameterID="ContinentsPPContinentCount"
+			 Name="LOC_CPP_CONTINENT_COUNT"
+			 Description="LOC_CPP_CONTINENT_COUNT_DESC"
+			 Domain="ContinentsPPContinentCountDomain"
+			 ConfigurationKey="ContinentsPPContinentCount"
+			 DefaultValue="2"
+			 SortIndex="1040"
+			 Key1="Map"
+			 Key2="{ContinentsPlusPlus}modules/maps/continents-plus-plus.js"
+			 ConfigurationGroup="Map"
+			 GroupId="MapOptions"
+			 Hash="0"/>
+		<!-- Player Distribution Option (Multiplayer Only) -->
 		<Row ParameterID="ContinentsPPPlayerDistribution"
 			 Name="LOC_CPP_PLAYER_DISTRIBUTION"
 			 Description="LOC_CPP_PLAYER_DISTRIBUTION_DESC"
@@ -17,6 +31,23 @@
 	</Parameters>
 
 	<DomainValues>
+		<!-- Continent Count Options -->
+		<Row Domain="ContinentsPPContinentCountDomain"
+			 Value="0"
+			 Name="LOC_CPP_CONT_FEW"
+			 Description="LOC_CPP_CONT_FEW_DESC"
+			 SortIndex="10"/>
+		<Row Domain="ContinentsPPContinentCountDomain"
+			 Value="1"
+			 Name="LOC_CPP_CONT_MANY"
+			 Description="LOC_CPP_CONT_MANY_DESC"
+			 SortIndex="20"/>
+		<Row Domain="ContinentsPPContinentCountDomain"
+			 Value="2"
+			 Name="LOC_CPP_CONT_RANDOM"
+			 Description="LOC_CPP_CONT_RANDOM_DESC"
+			 SortIndex="30"/>
+		<!-- Player Distribution Options -->
 		<!-- Value 0: Clustered - humans on same/nearby continents -->
 		<Row Domain="ContinentsPPPlayerDistribDomain"
 			 Value="0"
