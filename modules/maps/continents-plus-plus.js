@@ -125,8 +125,10 @@ function distanceToLineSegmentWrapped(px, py, x1, y1, x2, y2, mapWidth) {
 /**
  * Adds island chains in the corridors between inhabited (homeland) continents
  * Creates stepping-stone archipelagos for naval travel between player start continents
+ * @param useCustomRegionIds - If true, assigns each island to nearest inhabited continent's region ID
+ * @param fallbackRegionId - Region ID to use if KD-tree search fails (prevents invalid region 1)
  */
-function addCorridorIslands(iWidth, iHeight, mapSeed, continentIsInhabited, tiles, generatorSettings, traversableTiles) {
+function addCorridorIslands(iWidth, iHeight, mapSeed, continentIsInhabited, tiles, generatorSettings, traversableTiles, useCustomRegionIds = false, fallbackRegionId = 1) {
   try {
     const random = createSeededRandom(mapSeed + 67890);
 
@@ -400,8 +402,28 @@ function addCorridorIslands(iWidth, iHeight, mapSeed, continentIsInhabited, tile
             try {
               TerrainBuilder.setTerrainType(it.x, it.y, globals.g_FlatTerrain);
               TerrainBuilder.addPlotTag(it.x, it.y, PlotTags.PLOT_TAG_ISLAND);
-              // Corridor islands between homelands = WEST (homeland waters)
-              TerrainBuilder.setLandmassRegionId(it.x, it.y, LandmassRegion.LANDMASS_REGION_WEST);
+
+              // Set region ID based on mode
+              if (useCustomRegionIds) {
+                // Find nearest inhabited continent and use its ID
+                let nearestContinentId = centers[0]?.id ?? fallbackRegionId;
+                let nearestDist = Infinity;
+                for (const c of centers) {
+                  let dx = Math.abs(it.x - c.x);
+                  if (dx > iWidth / 2) dx = iWidth - dx;
+                  const dy = Math.abs(it.y - c.y);
+                  const dist = Math.sqrt(dx * dx + dy * dy);
+                  if (dist < nearestDist) {
+                    nearestDist = dist;
+                    nearestContinentId = c.id;
+                  }
+                }
+                TerrainBuilder.setLandmassRegionId(it.x, it.y, nearestContinentId);
+              } else {
+                // Corridor islands between homelands = WEST (homeland waters)
+                TerrainBuilder.setLandmassRegionId(it.x, it.y, LandmassRegion.LANDMASS_REGION_WEST);
+              }
+
               usedPositions.add(key);
               tilesConverted++;
               islandTilesThisChain++;
@@ -443,8 +465,10 @@ function addCorridorIslands(iWidth, iHeight, mapSeed, continentIsInhabited, tile
  * Adds small islands in large empty ocean areas
  * Scans for ocean tiles far from land and randomly converts some to islands
  * Only runs 40-60% of the time for map variety
+ * @param useCustomRegionIds - If true, assigns each island to nearest major continent's region ID
+ * @param fallbackRegionId - Region ID to use if KD-tree search fails (prevents invalid region 1)
  */
-function addOpenOceanIslands(iWidth, iHeight, mapSeed, continentIsInhabited, majorContinentKdTree, tiles, traversableTiles) {
+function addOpenOceanIslands(iWidth, iHeight, mapSeed, continentIsInhabited, majorContinentKdTree, tiles, traversableTiles, useCustomRegionIds = false, fallbackRegionId = 1) {
   try {
     const random = createSeededRandom(mapSeed + 12345);  // Different seed offset for variety
 
@@ -586,22 +610,22 @@ function addOpenOceanIslands(iWidth, iHeight, mapSeed, continentIsInhabited, maj
         TerrainBuilder.setTerrainType(x, y, globals.g_FlatTerrain);
         TerrainBuilder.addPlotTag(x, y, PlotTags.PLOT_TAG_ISLAND);
 
-        // Determine WEST/EAST based on nearest major continent
-        let isNearInhabited = false;
-        try {
-          const searchPos = { x, y };
-          const searchResult = majorContinentKdTree.search(searchPos);
-          if (searchResult && searchResult.data && searchResult.data.landmassId) {
-            isNearInhabited = continentIsInhabited.get(searchResult.data.landmassId) ?? false;
-          }
-        } catch (e) {
-          isNearInhabited = false;
-        }
+        // Determine region based on nearest major continent
+        const searchPos = { x, y };
+        const searchResult = majorContinentKdTree.search(searchPos);
+        const nearestContinentId = searchResult?.data?.landmassId ?? fallbackRegionId;
 
-        if (isNearInhabited) {
-          TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_WEST);
+        if (useCustomRegionIds) {
+          // Use the nearest major continent's ID as region ID
+          TerrainBuilder.setLandmassRegionId(x, y, nearestContinentId);
         } else {
-          TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_EAST);
+          // Binary WEST/EAST based on inhabited status
+          const isNearInhabited = continentIsInhabited.get(nearestContinentId) ?? false;
+          if (isNearInhabited) {
+            TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_WEST);
+          } else {
+            TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_EAST);
+          }
         }
 
         usedPositions.add(`${x},${y}`);
@@ -768,7 +792,7 @@ const MAP_SIZE_CONFIGS = {
   // Target: ~60-65% water, multiple distinct continents with island chains
   0: {
     name: 'TINY',
-    landmassCount: { min: 3, max: 4 },
+    landmassCount: { min: 2, max: 5 },  // Wider range: 2 continents to 5
     totalLandmassSize: { min: 26, max: 32 },      // Moderate increase, room for islands
     erosionPercent: { min: 8, max: 12 },
     // Coastal islands (attached - cosmetic)
@@ -791,7 +815,7 @@ const MAP_SIZE_CONFIGS = {
   // Index 1: SMALL (4-6 players)
   1: {
     name: 'SMALL',
-    landmassCount: { min: 3, max: 5 },
+    landmassCount: { min: 2, max: 6 },  // Wider range for more variety
     totalLandmassSize: { min: 28, max: 36 },      // Moderate increase, room for islands
     erosionPercent: { min: 10, max: 14 },
     // Coastal islands (attached - cosmetic)
@@ -814,7 +838,7 @@ const MAP_SIZE_CONFIGS = {
   // Index 2: STANDARD (6-8 players)
   2: {
     name: 'STANDARD',
-    landmassCount: { min: 4, max: 5 },
+    landmassCount: { min: 3, max: 6 },  // Wider range for more variety
     totalLandmassSize: { min: 30, max: 40 },      // Moderate increase, room for islands
     erosionPercent: { min: 12, max: 16 },
     // Coastal islands (attached to continents - cosmetic)
@@ -837,7 +861,7 @@ const MAP_SIZE_CONFIGS = {
   // Index 3: LARGE (8-10 players)
   3: {
     name: 'LARGE',
-    landmassCount: { min: 4, max: 6 },
+    landmassCount: { min: 4, max: 7 },  // Wider range for more variety
     totalLandmassSize: { min: 34, max: 45 },      // Moderate increase, room for islands
     erosionPercent: { min: 14, max: 18 },
     // Coastal islands (attached - cosmetic)
@@ -860,7 +884,7 @@ const MAP_SIZE_CONFIGS = {
   // Index 4: HUGE (10-12 players)
   4: {
     name: 'HUGE',
-    landmassCount: { min: 5, max: 7 },
+    landmassCount: { min: 5, max: 8 },  // Wider range for more variety
     totalLandmassSize: { min: 38, max: 50 },      // Moderate increase, room for islands
     erosionPercent: { min: 16, max: 20 },
     // Coastal islands (attached - cosmetic)
@@ -884,18 +908,42 @@ const MAP_SIZE_CONFIGS = {
 /**
  * Generates randomized configuration for this map generation
  * Each call produces different (but balanced) parameters
+ * @param {number} mapSizeIndex - Map size (0=Tiny, 4=Huge)
+ * @param {number} randomSeed - Seed for reproducible randomization
+ * @param {number} continentCountMode - 0=Few(2-4), 1=Many(5-7), 2=Random(map-based)
  */
-function generateRandomizedConfig(mapSizeIndex, randomSeed) {
+function generateRandomizedConfig(mapSizeIndex, randomSeed, continentCountMode = 2) {
   const random = createSeededRandom(randomSeed);
   const baseConfig = MAP_SIZE_CONFIGS[mapSizeIndex] || MAP_SIZE_CONFIGS[2];
 
   console.log(`[ContinentsPP] Generating randomized config for ${baseConfig.name} map (seed: ${randomSeed})`);
 
-  // Randomize number of continents
-  const landmassCount = randomInt(random,
-    baseConfig.landmassCount.min,
-    baseConfig.landmassCount.max
-  );
+  // Determine landmass count based on continent count mode
+  let landmassCount;
+  let landmassMin, landmassMax;
+
+  if (continentCountMode === 0) {
+    // Few: 2-4 continents (capped by map size reasonability)
+    landmassMin = 2;
+    landmassMax = Math.min(4, baseConfig.landmassCount.max);
+    landmassCount = randomInt(random, landmassMin, landmassMax);
+    console.log(`[ContinentsPP] Continent mode: Few → ${landmassMin}-${landmassMax} range, rolled ${landmassCount}`);
+  } else if (continentCountMode === 1) {
+    // Many: 5-7 continents (but respect map size minimums)
+    landmassMin = Math.max(5, baseConfig.landmassCount.min);
+    landmassMax = Math.max(7, baseConfig.landmassCount.max);
+    // Cap at reasonable max for the map size
+    landmassMax = Math.min(landmassMax, mapSizeIndex + 6);  // Tiny=6, Small=7, Standard=8, Large=9, Huge=10
+    landmassCount = randomInt(random, landmassMin, landmassMax);
+    console.log(`[ContinentsPP] Continent mode: Many → ${landmassMin}-${landmassMax} range, rolled ${landmassCount}`);
+  } else {
+    // Random: use map-size-based defaults
+    landmassCount = randomInt(random,
+      baseConfig.landmassCount.min,
+      baseConfig.landmassCount.max
+    );
+    console.log(`[ContinentsPP] Continent mode: Random → ${baseConfig.landmassCount.min}-${baseConfig.landmassCount.max} range, rolled ${landmassCount}`);
+  }
 
   // Randomize total landmass size (controls water percentage)
   const totalLandmassSize = randomInt(random,
@@ -1111,6 +1159,44 @@ async function generateMap() {
   console.log("  CONTINENTS++ - Enhanced Voronoi Plate Tectonics Generation");
   console.log("═══════════════════════════════════════════════════════════════");
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CUSTOM REGION ID TEST
+  // Test if the engine accepts custom region IDs beyond WEST(2) and EAST(1)
+  // This determines whether we can implement per-continent distant lands tracking
+  // ═══════════════════════════════════════════════════════════════════════════
+  console.log("[ContinentsPP] === CUSTOM REGION ID TEST ===");
+
+  // Test setting custom region IDs (3, 4, 5) on tile (0, 0)
+  const testCoordX = 0;
+  const testCoordY = 0;
+  const testValues = [3, 4, 5, 10, 100];
+  let customRegionIdsWork = true;
+
+  for (const testValue of testValues) {
+    try {
+      // Set custom region ID
+      TerrainBuilder.setLandmassRegionId(testCoordX, testCoordY, testValue);
+      // Read it back
+      const readBack = GameplayMap.getLandmassRegionId(testCoordX, testCoordY);
+      const success = (readBack === testValue);
+      console.log(`[ContinentsPP]   setLandmassRegionId(${testCoordX}, ${testCoordY}, ${testValue}) -> readBack: ${readBack}, success: ${success}`);
+      if (!success) {
+        customRegionIdsWork = false;
+      }
+    } catch (e) {
+      console.log(`[ContinentsPP]   setLandmassRegionId(${testCoordX}, ${testCoordY}, ${testValue}) -> ERROR: ${e.message}`);
+      customRegionIdsWork = false;
+    }
+  }
+
+  // Reset test tile to WEST (2) for now
+  TerrainBuilder.setLandmassRegionId(testCoordX, testCoordY, LandmassRegion.LANDMASS_REGION_WEST);
+
+  console.log(`[ContinentsPP] === CUSTOM REGION ID TEST RESULT: ${customRegionIdsWork ? 'SUCCESS - Custom IDs work!' : 'FAILED - Using binary WEST/EAST'} ===`);
+
+  // Store result globally for terrain application phase
+  const useCustomRegionIds = customRegionIdsWork;
+
   // Check for natural wonder event
   let naturalWonderEvent = false;
   const liveEventDBRow = GameInfo.GlobalParameters.lookup("REGISTERED_RACE_TO_WONDERS_EVENT");
@@ -1167,7 +1253,27 @@ async function generateMap() {
   console.log(`[ContinentsPP] Dimensions: ${iWidth}x${iHeight}`);
   console.log(`[ContinentsPP] Total players: ${iTotalPlayers} (${humanCount} human, ${aiCount} AI)`);
 
-  // Read player distribution mode from game setup options
+  // Read continent count mode from game setup options
+  // Mode 0: Few (2-4) - fewer, larger continents
+  // Mode 1: Many (5-7) - more, smaller continents
+  // Mode 2: Random (default) - varies by map size
+  let continentCountMode = 2;  // Default to Random
+  try {
+    const countConfigValue = Configuration.getMapValue("ContinentsPPContinentCount");
+    if (countConfigValue !== undefined && countConfigValue !== null) {
+      continentCountMode = parseInt(countConfigValue, 10);
+      if (isNaN(continentCountMode) || continentCountMode < 0 || continentCountMode > 2) {
+        continentCountMode = 2;
+      }
+    }
+  } catch (e) {
+    console.log(`[ContinentsPP] Could not read continent count config: ${e.message}`);
+  }
+
+  const CONTINENT_COUNT_NAMES = ['Few (2-4)', 'Many (5-7)', 'Random'];
+  console.log(`[ContinentsPP] Continent Count Mode: ${continentCountMode} (${CONTINENT_COUNT_NAMES[continentCountMode]})`);
+
+  // Read player distribution mode from game setup options (Multiplayer Only)
   // Mode 0: Clustered (default) - humans on same/nearby continents
   // Mode 1: Spread - humans on different continents, preserve distant lands
   // Mode 2: Random - no special human handling
@@ -1199,8 +1305,8 @@ async function generateMap() {
   const mapSeed = GameplayMap.getRandomSeed();
   console.log(`[ContinentsPP] Map seed: ${mapSeed}`);
 
-  // Generate randomized configuration based on map size and seed
-  const randomConfig = generateRandomizedConfig(mapSizeIndex, mapSeed);
+  // Generate randomized configuration based on map size, seed, and continent count mode
+  const randomConfig = generateRandomizedConfig(mapSizeIndex, mapSeed, continentCountMode);
 
   //────────────────────────────────────────────────────────────────────────────
   // VORONOI PLATE TECTONICS GENERATION
@@ -1769,7 +1875,47 @@ async function generateMap() {
     const hasPlayers = generatorSettings.landmass[i]?.playerAreas > 0;
     continentIsInhabited.set(landmassId, hasPlayers);
   }
-  console.log(`[ContinentsPP] Major continents: ${numMajorContinents}, Islands will inherit region from nearest continent`);
+
+  // === REGION ID TRACKING ===
+  // Track which region IDs are valid (correspond to major continents)
+  // This prevents the "region 1 doesn't exist" bug when fallback is used
+  const validRegionIds = new Set();
+  const inhabitedRegionIds = new Set();
+  let fallbackRegionId = 1;  // Will be updated to a valid region
+
+  for (let i = 0; i < numMajorContinents; i++) {
+    const landmassId = i + 1;
+    validRegionIds.add(landmassId);
+    if (continentIsInhabited.get(landmassId)) {
+      inhabitedRegionIds.add(landmassId);
+      if (fallbackRegionId === 1 || !validRegionIds.has(fallbackRegionId)) {
+        fallbackRegionId = landmassId;  // Use first inhabited continent as fallback
+      }
+    }
+  }
+
+  // If no inhabited continents, use first valid region
+  if (fallbackRegionId === 1 && !validRegionIds.has(1) && validRegionIds.size > 0) {
+    fallbackRegionId = validRegionIds.values().next().value;
+  }
+
+  console.log(`[ContinentsPP] === REGION ID TRACKING ===`);
+  console.log(`[ContinentsPP] Valid region IDs: [${[...validRegionIds].join(', ')}]`);
+  console.log(`[ContinentsPP] Inhabited region IDs: [${[...inhabitedRegionIds].join(', ')}]`);
+  console.log(`[ContinentsPP] Fallback region ID: ${fallbackRegionId}`);
+
+  // Map to track actual region assignments (for diagnostics)
+  const regionAssignmentCounts = new Map();  // regionId -> count of tiles assigned
+
+  // Log region ID strategy
+  if (useCustomRegionIds) {
+    console.log(`[ContinentsPP] === USING CUSTOM REGION IDs (per-continent distant lands) ===`);
+    console.log(`[ContinentsPP] Major continents: ${numMajorContinents}, each gets unique region ID`);
+    console.log(`[ContinentsPP] Region IDs: Continent 1 → ID 1, Continent 2 → ID 2, etc.`);
+  } else {
+    console.log(`[ContinentsPP] === USING BINARY REGION IDs (WEST=homeland, EAST=distant) ===`);
+    console.log(`[ContinentsPP] Major continents: ${numMajorContinents}, Islands inherit from nearest continent`);
+  }
 
   for (let y = 0; y < tiles.length; ++y) {
     for (let x = 0; x < tiles[y].length; ++x) {
@@ -1791,35 +1937,68 @@ async function generateMap() {
         landmassTileCounts.set(tile.landmassId, currentCount + 1);
 
         // Set landmass region ID (critical for distant lands mechanic!)
-        // Continents WITH player starts = WEST (homelands)
-        // Continents WITHOUT player starts = EAST (distant lands)
-        // Islands inherit WEST/EAST from their nearest major continent
-        // This ensures REQUIREMENT_CITY_IS_DISTANT_LANDS works correctly
-        // and Exploration Age bonuses apply to uninhabited continents AND their islands
+        // When custom region IDs work: each continent gets its own ID (1, 2, 3, etc.)
+        //   - This enables per-player relative distant lands tracking
+        //   - player.isDistantLands() compares tile region to player's spawn region
+        // When custom IDs don't work: fall back to binary WEST/EAST
+        //   - Continents WITH player starts = WEST (homelands)
+        //   - Continents WITHOUT player starts = EAST (distant lands)
         const isMajorContinent = tile.landmassId <= numMajorContinents;
-        let isInhabited;
 
-        if (isMajorContinent) {
-          // Major continent - check directly
-          isInhabited = continentIsInhabited.get(tile.landmassId) ?? false;
-        } else {
-          // Island - find nearest major continent and inherit its region
-          const nearestContinentTile = majorContinentKdTree.search(tile.pos);
-          const nearestContinentId = nearestContinentTile?.data?.landmassId ?? 1;
-          isInhabited = continentIsInhabited.get(nearestContinentId) ?? false;
-          // Tag as island for resource variety
-          TerrainBuilder.addPlotTag(x, y, PlotTags.PLOT_TAG_ISLAND);
-        }
+        if (useCustomRegionIds) {
+          // === PER-CONTINENT REGION IDs ===
+          // Each major continent gets its landmassId as region ID (1, 2, 3, etc.)
+          // Islands inherit region from nearest major continent
+          let regionId;
 
-        if (isInhabited) {
-          // Inhabited continent (or island near one) = homeland
-          TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_WEST);
-        } else {
-          // Uninhabited continent (or island near one) = distant lands
-          TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_EAST);
-          // Also tag uninhabited continents as islands for resource variety
           if (isMajorContinent) {
+            // Major continent - use landmassId directly as region ID
+            regionId = tile.landmassId;
+          } else {
+            // Island - find nearest major continent and inherit its region ID
+            const nearestContinentTile = majorContinentKdTree.search(tile.pos);
+            // Use fallbackRegionId instead of hardcoded 1 to ensure valid region
+            regionId = nearestContinentTile?.data?.landmassId ?? fallbackRegionId;
+            // Tag as island for resource variety
             TerrainBuilder.addPlotTag(x, y, PlotTags.PLOT_TAG_ISLAND);
+          }
+
+          TerrainBuilder.setLandmassRegionId(x, y, regionId);
+
+          // Track region assignment for diagnostics
+          regionAssignmentCounts.set(regionId, (regionAssignmentCounts.get(regionId) || 0) + 1);
+
+          // Tag uninhabited continents as islands for resource variety
+          if (isMajorContinent && !(continentIsInhabited.get(tile.landmassId) ?? false)) {
+            TerrainBuilder.addPlotTag(x, y, PlotTags.PLOT_TAG_ISLAND);
+          }
+        } else {
+          // === BINARY WEST/EAST FALLBACK ===
+          let isInhabited;
+
+          if (isMajorContinent) {
+            // Major continent - check directly
+            isInhabited = continentIsInhabited.get(tile.landmassId) ?? false;
+          } else {
+            // Island - find nearest major continent and inherit its region
+            const nearestContinentTile = majorContinentKdTree.search(tile.pos);
+            // Use fallbackRegionId instead of hardcoded 1
+            const nearestContinentId = nearestContinentTile?.data?.landmassId ?? fallbackRegionId;
+            isInhabited = continentIsInhabited.get(nearestContinentId) ?? false;
+            // Tag as island for resource variety
+            TerrainBuilder.addPlotTag(x, y, PlotTags.PLOT_TAG_ISLAND);
+          }
+
+          if (isInhabited) {
+            // Inhabited continent (or island near one) = homeland
+            TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_WEST);
+          } else {
+            // Uninhabited continent (or island near one) = distant lands
+            TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_EAST);
+            // Also tag uninhabited continents as islands for resource variety
+            if (isMajorContinent) {
+              TerrainBuilder.addPlotTag(x, y, PlotTags.PLOT_TAG_ISLAND);
+            }
           }
         }
       } else {
@@ -1842,25 +2021,44 @@ async function generateMap() {
           const nearbyLandmassId = landmassTile?.data?.landmassId ?? -1;
           if (nearbyLandmassId > 0) {
             // Coast inherits region from nearest landmass
-            // For islands, trace back to their nearest major continent
             const nearbyIsMajorContinent = nearbyLandmassId <= numMajorContinents;
-            let nearbyIsInhabited;
 
-            if (nearbyIsMajorContinent) {
-              nearbyIsInhabited = continentIsInhabited.get(nearbyLandmassId) ?? false;
-            } else {
-              // Nearby land is an island - find which major continent it's near
-              const nearestContinentTile = majorContinentKdTree.search(tile.pos);
-              const nearestContinentId = nearestContinentTile?.data?.landmassId ?? 1;
-              nearbyIsInhabited = continentIsInhabited.get(nearestContinentId) ?? false;
-            }
+            if (useCustomRegionIds) {
+              // === PER-CONTINENT REGION IDs ===
+              let regionId;
+              if (nearbyIsMajorContinent) {
+                regionId = nearbyLandmassId;
+              } else {
+                // Nearby land is an island - find which major continent it's near
+                const nearestContinentTile = majorContinentKdTree.search(tile.pos);
+                regionId = nearestContinentTile?.data?.landmassId ?? fallbackRegionId;
+              }
+              TerrainBuilder.setLandmassRegionId(x, y, regionId);
 
-            if (nearbyIsInhabited) {
-              TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_WEST);
+              // Tag coasts near uninhabited continents/islands
+              if (!(continentIsInhabited.get(regionId) ?? false)) {
+                TerrainBuilder.addPlotTag(x, y, PlotTags.PLOT_TAG_ISLAND);
+              }
             } else {
-              // Coasts near uninhabited continents/islands = distant lands
-              TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_EAST);
-              TerrainBuilder.addPlotTag(x, y, PlotTags.PLOT_TAG_ISLAND);
+              // === BINARY WEST/EAST FALLBACK ===
+              let nearbyIsInhabited;
+
+              if (nearbyIsMajorContinent) {
+                nearbyIsInhabited = continentIsInhabited.get(nearbyLandmassId) ?? false;
+              } else {
+                // Nearby land is an island - find which major continent it's near
+                const nearestContinentTile = majorContinentKdTree.search(tile.pos);
+                const nearestContinentId = nearestContinentTile?.data?.landmassId ?? fallbackRegionId;
+                nearbyIsInhabited = continentIsInhabited.get(nearestContinentId) ?? false;
+              }
+
+              if (nearbyIsInhabited) {
+                TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_WEST);
+              } else {
+                // Coasts near uninhabited continents/islands = distant lands
+                TerrainBuilder.setLandmassRegionId(x, y, LandmassRegion.LANDMASS_REGION_EAST);
+                TerrainBuilder.addPlotTag(x, y, PlotTags.PLOT_TAG_ISLAND);
+              }
             }
           }
         }
@@ -1872,6 +2070,23 @@ async function generateMap() {
   const landPercent = (landTiles / totalTiles * 100).toFixed(1);
   const waterPercent = (waterTiles / totalTiles * 100).toFixed(1);
   console.log(`[ContinentsPP] Land/Water: ${landPercent}% land / ${waterPercent}% water`);
+
+  // === REGION ASSIGNMENT DIAGNOSTICS ===
+  if (useCustomRegionIds) {
+    console.log(`[ContinentsPP] === REGION ASSIGNMENT SUMMARY ===`);
+    const sortedRegions = [...regionAssignmentCounts.entries()].sort((a, b) => a[0] - b[0]);
+    for (const [regionId, count] of sortedRegions) {
+      const isValid = validRegionIds.has(regionId);
+      const isInhabited = inhabitedRegionIds.has(regionId);
+      const status = isInhabited ? 'HOMELAND' : (isValid ? 'DISTANT' : '⚠️ INVALID');
+      console.log(`[ContinentsPP]   Region ${regionId}: ${count} tiles [${status}]`);
+    }
+    // Check for any tiles assigned to invalid regions
+    const invalidRegions = [...regionAssignmentCounts.keys()].filter(r => !validRegionIds.has(r));
+    if (invalidRegions.length > 0) {
+      console.log(`[ContinentsPP] ⚠️ WARNING: Tiles assigned to invalid regions: [${invalidRegions.join(', ')}]`);
+    }
+  }
 
   // Island Analysis: Categorize landmasses by size
   // Major continents are the first N landmasses (where N = configured landmassCount)
@@ -2249,7 +2464,7 @@ async function generateMap() {
   // Creates stepping-stone archipelagos for naval travel between player starts
   //────────────────────────────────────────────────────────────────────────────
 
-  const corridorResult = addCorridorIslands(iWidth, iHeight, mapSeed, continentIsInhabited, tiles, generatorSettings, traversableTiles);
+  const corridorResult = addCorridorIslands(iWidth, iHeight, mapSeed, continentIsInhabited, tiles, generatorSettings, traversableTiles, useCustomRegionIds, fallbackRegionId);
   mapStats.corridorChains = corridorResult.chainsAdded;
   mapStats.corridorIslands = corridorResult.islandsAdded;
   mapStats.corridorTiles = corridorResult.tilesConverted;
@@ -2263,7 +2478,7 @@ async function generateMap() {
   // Scan for large empty ocean areas and add small islands
   //────────────────────────────────────────────────────────────────────────────
 
-  const oceanIslandResult = addOpenOceanIslands(iWidth, iHeight, mapSeed, continentIsInhabited, majorContinentKdTree, tiles, traversableTiles);
+  const oceanIslandResult = addOpenOceanIslands(iWidth, iHeight, mapSeed, continentIsInhabited, majorContinentKdTree, tiles, traversableTiles, useCustomRegionIds, fallbackRegionId);
   mapStats.islandCount += oceanIslandResult.islandsAdded;
   mapStats.islandTiles += oceanIslandResult.tilesConverted;
   mapStats.openOceanChains = oceanIslandResult.chainsAdded || 0;
@@ -2299,6 +2514,97 @@ async function generateMap() {
   } else if (stampedCount > expectedCount) {
     console.log(`[ContinentsPP] Note: More continents detected (islands may be counted as separate continents)`);
   }
+
+  //────────────────────────────────────────────────────────────────────────────
+  // POST-STAMP REGION ID ASSIGNMENT
+  // Assign unique region IDs based on GAME's actual continent boundaries
+  // This ensures each separate landmass (across ocean) = different region = Distant Lands
+  //────────────────────────────────────────────────────────────────────────────
+
+  console.log(`[ContinentsPP] === POST-STAMP REGION ID ASSIGNMENT ===`);
+  console.log(`[ContinentsPP] Re-assigning region IDs based on game's actual continents...`);
+
+  // Step 1: Map each game continent to a unique region ID
+  // Game continent IDs can be arbitrary (82, 213, 229, etc.), so we remap to 1, 2, 3...
+  const gameContinentToRegion = new Map();  // game continent ID → region ID
+  const regionToGameContinent = new Map();  // region ID → game continent ID
+  let nextRegionId = 1;
+
+  // Sort continent IDs for deterministic assignment
+  const sortedContinentIds = [...stampedContinents].sort((a, b) => a - b);
+  for (const continentId of sortedContinentIds) {
+    gameContinentToRegion.set(continentId, nextRegionId);
+    regionToGameContinent.set(nextRegionId, continentId);
+    console.log(`[ContinentsPP]   Game continent ${continentId} → Region ${nextRegionId}`);
+    nextRegionId++;
+  }
+
+  // Step 2: Build KD-tree of land tiles for coastal/water inheritance
+  const landTilesForKdTree = [];
+  for (let y = 0; y < iHeight; y++) {
+    for (let x = 0; x < iWidth; x++) {
+      const continentId = GameplayMap.getContinentType(x, y);
+      if (continentId !== -1) {
+        landTilesForKdTree.push({
+          pos: { x, y },
+          continentId,
+          regionId: gameContinentToRegion.get(continentId)
+        });
+      }
+    }
+  }
+
+  const postStampLandKdTree = new kdTree((tile) => tile.pos);
+  postStampLandKdTree.build(landTilesForKdTree);
+  console.log(`[ContinentsPP] Built KD-tree with ${landTilesForKdTree.length} land tiles`);
+
+  // Step 3: Re-assign LandmassRegionId for ALL tiles
+  let landRegionUpdates = 0;
+  let coastRegionUpdates = 0;
+  const regionTileCounts = new Map();  // regionId → tile count
+
+  for (let y = 0; y < iHeight; y++) {
+    for (let x = 0; x < iWidth; x++) {
+      const continentId = GameplayMap.getContinentType(x, y);
+
+      if (continentId !== -1) {
+        // Land tile - use direct mapping
+        const regionId = gameContinentToRegion.get(continentId);
+        TerrainBuilder.setLandmassRegionId(x, y, regionId);
+        regionTileCounts.set(regionId, (regionTileCounts.get(regionId) || 0) + 1);
+        landRegionUpdates++;
+      } else {
+        // Water tile - check if it's coastal (near land)
+        const nearestLand = postStampLandKdTree.search({ x, y });
+        if (nearestLand && nearestLand.data) {
+          const distToLand = Math.sqrt(
+            Math.pow(x - nearestLand.data.pos.x, 2) +
+            Math.pow(y - nearestLand.data.pos.y, 2)
+          );
+          // Only assign region to coastal water (within ~3 tiles of land)
+          if (distToLand <= 3) {
+            TerrainBuilder.setLandmassRegionId(x, y, nearestLand.data.regionId);
+            coastRegionUpdates++;
+          }
+        }
+      }
+    }
+  }
+
+  console.log(`[ContinentsPP] Updated ${landRegionUpdates} land tiles, ${coastRegionUpdates} coastal tiles`);
+  console.log(`[ContinentsPP] Region tile counts:`);
+  for (const [regionId, count] of [...regionTileCounts.entries()].sort((a, b) => a[0] - b[0])) {
+    const continentId = regionToGameContinent.get(regionId);
+    console.log(`[ContinentsPP]   Region ${regionId} (continent ${continentId}): ${count} tiles`);
+  }
+
+  // Store mappings for later use in player assignment
+  const postStampRegionData = {
+    gameContinentToRegion,
+    regionToGameContinent,
+    totalRegions: nextRegionId - 1,
+    landKdTree: postStampLandKdTree
+  };
 
   console.log("[ContinentsPP] Adding mountains and volcanoes...");
   addMountains(iWidth, iHeight);
@@ -2399,6 +2705,86 @@ async function generateMap() {
   startPositions = assignStartPositionsFromTiles(playerRegions);
 
   //────────────────────────────────────────────────────────────────────────────
+  // PLAYER START REGION VERIFICATION
+  // After assignment, verify each player is on a valid game continent with region ID
+  // Uses post-stamp region assignment (each game continent = unique region)
+  //────────────────────────────────────────────────────────────────────────────
+
+  console.log(`[ContinentsPP] === PLAYER START REGION VERIFICATION ===`);
+  console.log(`[ContinentsPP] Each game continent has unique region ID (post-stamp assignment)`);
+  console.log(`[ContinentsPP] Player's spawn continent = their Homeland, all others = Distant Lands`);
+
+  const playerStartRegions = new Map();  // playerIndex -> regionId
+  const regionToPlayers = new Map();     // regionId -> [playerIndex]
+
+  for (let i = 0; i < aliveMajorIds.length; i++) {
+    const plotIndex = startPositions[i];
+    if (plotIndex === undefined || plotIndex < 0) continue;
+
+    const x = plotIndex % iWidth;
+    const y = Math.floor(plotIndex / iWidth);
+    const isHuman = Players.isHuman(aliveMajorIds[i]);
+
+    // Get the region ID (set during post-stamp assignment)
+    let regionId;
+    let gameContinentId;
+    try {
+      regionId = GameplayMap.getLandmassRegionId(x, y);
+      gameContinentId = GameplayMap.getContinentType(x, y);
+    } catch (e) {
+      regionId = -1;
+      gameContinentId = -1;
+    }
+
+    playerStartRegions.set(i, regionId);
+
+    // Track which players are on which region
+    if (!regionToPlayers.has(regionId)) {
+      regionToPlayers.set(regionId, []);
+    }
+    regionToPlayers.get(regionId).push({ index: i, isHuman, x, y, gameContinentId });
+
+    // All regions are valid now (each game continent has one)
+    const isValidRegion = regionId > 0;
+    const status = isValidRegion ? '✓' : '⚠️ INVALID';
+
+    console.log(`[ContinentsPP]   P${i} (${isHuman ? 'HUMAN' : 'AI'}): (${x}, ${y}) region=${regionId} continent=${gameContinentId} ${status}`);
+  }
+
+  // Summarize regions with players
+  console.log(`[ContinentsPP] Players per region (each region = one game continent):`);
+  for (const [regionId, players] of [...regionToPlayers.entries()].sort((a, b) => a[0] - b[0])) {
+    const humanCount = players.filter(p => p.isHuman).length;
+    const aiCount = players.length - humanCount;
+    const continentId = players[0]?.gameContinentId ?? '?';
+    const isHomeland = humanCount > 0 ? ' [HUMAN HOMELAND]' : '';
+    console.log(`[ContinentsPP]   Region ${regionId} (continent ${continentId}): ${players.length} players (${humanCount} human, ${aiCount} AI)${isHomeland}`);
+  }
+
+  // Check for any players on invalid regions (shouldn't happen with post-stamp assignment)
+  const invalidRegionPlayers = [...playerStartRegions.entries()].filter(([_, regionId]) => regionId <= 0);
+  if (invalidRegionPlayers.length > 0) {
+    console.log(`[ContinentsPP] ⚠️ WARNING: ${invalidRegionPlayers.length} player(s) on invalid regions!`);
+
+    // Attempt to fix using post-stamp KD-tree
+    for (const [playerIndex, _] of invalidRegionPlayers) {
+      const plotIndex = startPositions[playerIndex];
+      const x = plotIndex % iWidth;
+      const y = Math.floor(plotIndex / iWidth);
+      try {
+        const nearestLand = postStampRegionData.landKdTree.search({ x, y });
+        if (nearestLand?.data?.regionId) {
+          console.log(`[ContinentsPP]   P${playerIndex}: Fixing to region ${nearestLand.data.regionId}`);
+          TerrainBuilder.setLandmassRegionId(x, y, nearestLand.data.regionId);
+          playerStartRegions.set(playerIndex, nearestLand.data.regionId);
+        }
+      } catch (e) {
+        console.log(`[ContinentsPP]   P${playerIndex}: Fix failed - ${e.message}`);
+      }
+    }
+  }
+
+  //────────────────────────────────────────────────────────────────────────────
   // HUMAN ISOLATION FIX
   // After assignment, check if human is alone on their continent
   // If so, swap with an AI from a populated continent
@@ -2406,6 +2792,17 @@ async function generateMap() {
   //────────────────────────────────────────────────────────────────────────────
 
   console.log(`[ContinentsPP] === POST-ASSIGNMENT HUMAN ISOLATION CHECK ===`);
+
+  // Configuration for dynamic continent capacity - SCALES WITH MAP SIZE
+  // Larger maps have more space, so we increase requirements proportionally
+  const MIN_TILES_PER_PLAYER = 60 + mapSizeIndex * 10;  // 60, 70, 80, 90, 100 for Tiny→Huge
+  const MIN_COMPANION_SEPARATION = 8 + mapSizeIndex * 2;  // 8, 10, 12, 14, 16 for Tiny→Huge
+
+  console.log(`[ContinentsPP] Distance scaling for ${MAP_SIZE_CONFIGS[mapSizeIndex]?.name || 'UNKNOWN'} map:`);
+  console.log(`[ContinentsPP]   MIN_TILES_PER_PLAYER: ${MIN_TILES_PER_PLAYER}`);
+  console.log(`[ContinentsPP]   MIN_COMPANION_SEPARATION: ${MIN_COMPANION_SEPARATION}`);
+
+  // Helper: get continent ID from plot index using game's continent stamping
 
   // Helper: get continent ID from plot index using game's continent stamping
   const getGameContinentFromPlot = (plotIndex) => {
@@ -2435,72 +2832,199 @@ async function generateMap() {
     }
   }
 
-  // Log current distribution by GAME continent
+  // Count tiles per game continent to calculate capacity
+  const continentTileCounts = new Map();  // continentId -> tile count
+  for (let y = 0; y < iHeight; y++) {
+    for (let x = 0; x < iWidth; x++) {
+      try {
+        const continentId = GameplayMap.getContinentType(x, y);
+        if (continentId >= 0) {
+          continentTileCounts.set(continentId, (continentTileCounts.get(continentId) || 0) + 1);
+        }
+      } catch (e) {
+        // Skip invalid tiles
+      }
+    }
+  }
+
+  // Calculate capacity for each continent
+  const getContinentCapacity = (continentId) => {
+    const tiles = continentTileCounts.get(continentId) || 0;
+    return Math.floor(tiles / MIN_TILES_PER_PLAYER);
+  };
+
+  // Log current distribution by GAME continent with capacity
   console.log(`[ContinentsPP] Distribution by GAME continent (after start position assignment):`);
   for (const [continentId, players] of playersPerContinent) {
     const hCount = players.filter(p => p.isHuman).length;
     const aCount = players.filter(p => !p.isHuman).length;
-    console.log(`[ContinentsPP]   Continent ${continentId}: ${players.length} players (${hCount} human, ${aCount} AI)`);
+    const tiles = continentTileCounts.get(continentId) || 0;
+    const capacity = getContinentCapacity(continentId);
+    console.log(`[ContinentsPP]   Continent ${continentId}: ${players.length} players (${hCount} human, ${aCount} AI) - ${tiles} tiles, capacity: ${capacity}`);
   }
 
-  // Check if any human is alone on their continent
+  // Check if human's continent situation needs correction
+  // Now uses capacity-aware logic: large continents can support multiple players
   const inhabitedContinents = Array.from(playersPerContinent.entries()).filter(([_, p]) => p.length > 0);
-  const bridgesExist = inhabitedContinents.length >= 2;
+
+  // Helper: calculate distance between two plot indices
+  const plotDistanceForIsolation = (plotA, plotB) => {
+    const ax = plotA % iWidth;
+    const ay = Math.floor(plotA / iWidth);
+    const bx = plotB % iWidth;
+    const by = Math.floor(plotB / iWidth);
+    let dx = Math.abs(ax - bx);
+    if (dx > iWidth / 2) dx = iWidth - dx;  // Handle wrap
+    const dy = Math.abs(ay - by);
+    return Math.sqrt(dx * dx + dy * dy);
+  };
 
   for (const [continentId, players] of playersPerContinent) {
     const humansHere = players.filter(p => p.isHuman);
+    const aisHere = players.filter(p => !p.isHuman);
 
-    // Human is alone if: only 1 player total AND that player is human
-    if (players.length === 1 && humansHere.length === 1) {
-      console.log(`[ContinentsPP] WARNING: Human alone on continent ${continentId}!`);
+    // Skip continents with no humans
+    if (humansHere.length === 0) continue;
 
-      if (!bridgesExist) {
-        console.log(`[ContinentsPP] No bridges exist (only ${inhabitedContinents.length} inhabited continent)`);
-      }
+    const capacity = getContinentCapacity(continentId);
+    const currentCount = players.length;
 
-      // Find an AI on a continent with multiple players to swap with
-      let swapTarget = null;
-      for (const [otherContinentId, otherPlayers] of playersPerContinent) {
-        if (otherContinentId === continentId) continue;
-        // Find continent with multiple players (so we can steal one AI)
-        const otherAis = otherPlayers.filter(p => !p.isHuman);
-        if (otherPlayers.length >= 2 && otherAis.length >= 1) {
-          swapTarget = { continentId: otherContinentId, ai: otherAis[0] };
+    console.log(`[ContinentsPP] Human's continent ${continentId}: ${currentCount} players, capacity: ${capacity}`);
+
+    // Case 1: Human is completely alone - try to add companions
+    if (currentCount === 1) {
+      console.log(`[ContinentsPP] Human is alone on continent ${continentId}`);
+
+      if (capacity >= 2) {
+        // Large enough continent - try to bring AIs here
+        console.log(`[ContinentsPP] Continent has capacity for ${capacity} players - looking for AIs to bring here`);
+
+        // Find AIs from overcrowded continents that we can bring here
+        const humanPlot = humansHere[0].plotIndex;
+        let aisToMove = [];
+
+        for (const [otherContId, otherPlayers] of playersPerContinent) {
+          if (otherContId === continentId) continue;
+          const otherCapacity = getContinentCapacity(otherContId);
+          const otherAis = otherPlayers.filter(p => !p.isHuman);
+
+          // Can steal an AI if other continent has more players than needed OR has excess AIs
+          if (otherPlayers.length > 1 && otherAis.length >= 1) {
+            for (const ai of otherAis) {
+              // Check if moving this AI leaves the other continent with at least 1 player
+              if (otherPlayers.length - 1 >= 1) {
+                aisToMove.push({ ai, fromContinent: otherContId, otherPlayers });
+              }
+            }
+          }
+        }
+
+        // Move AIs to human's continent until at capacity or no more candidates
+        const targetCompanions = Math.min(capacity - 1, aisToMove.length);  // capacity - 1 because human is already there
+        console.log(`[ContinentsPP] Found ${aisToMove.length} potential AI companions, target: ${targetCompanions}`);
+
+        for (let i = 0; i < targetCompanions; i++) {
+          const candidate = aisToMove[i];
+          const aiPlayer = candidate.ai;
+
+          // Swap human with AI from crowded continent - human joins companions, AI gets isolation
+          const humanPlayer = humansHere[0];
+
+          console.log(`[ContinentsPP] Swap details:`);
+          console.log(`[ContinentsPP]   Human playerIndex: ${humanPlayer.playerIndex}, AI playerIndex: ${aiPlayer.playerIndex}`);
+          console.log(`[ContinentsPP]   Before swap: startPositions[${humanPlayer.playerIndex}]=${startPositions[humanPlayer.playerIndex]}, startPositions[${aiPlayer.playerIndex}]=${startPositions[aiPlayer.playerIndex]}`);
+
+          const humanStartPos = startPositions[humanPlayer.playerIndex];
+          const aiStartPos = startPositions[aiPlayer.playerIndex];
+
+          startPositions[humanPlayer.playerIndex] = aiStartPos;
+          startPositions[aiPlayer.playerIndex] = humanStartPos;
+
+          console.log(`[ContinentsPP]   After swap: startPositions[${humanPlayer.playerIndex}]=${startPositions[humanPlayer.playerIndex]}, startPositions[${aiPlayer.playerIndex}]=${startPositions[aiPlayer.playerIndex]}`);
+
+          // Update playerRegions
+          const humanLandmass = playerRegions[humanPlayer.playerIndex]?.landmassId;
+          const aiLandmass = playerRegions[aiPlayer.playerIndex]?.landmassId;
+          if (playerRegions[humanPlayer.playerIndex]) {
+            playerRegions[humanPlayer.playerIndex].landmassId = aiLandmass;
+          }
+          if (playerRegions[aiPlayer.playerIndex]) {
+            playerRegions[aiPlayer.playerIndex].landmassId = humanLandmass;
+          }
+
+          const humanNewX = aiStartPos % iWidth;
+          const humanNewY = Math.floor(aiStartPos / iWidth);
+          console.log(`[ContinentsPP] Human (index ${humanPlayer.playerIndex}) moved to (${humanNewX}, ${humanNewY}) on continent ${candidate.fromContinent}`);
+
+          // Only need one swap to get human to company
           break;
         }
-      }
 
-      if (swapTarget) {
-        const humanPlayer = humansHere[0];
-        const aiPlayer = swapTarget.ai;
-
-        console.log(`[ContinentsPP] Swapping human (player ${humanPlayer.playerIndex}) with AI (player ${aiPlayer.playerIndex})`);
-        console.log(`[ContinentsPP]   Human was on continent ${continentId}, AI was on continent ${swapTarget.continentId}`);
-
-        // Swap start positions
-        const humanStartPos = startPositions[humanPlayer.playerIndex];
-        const aiStartPos = startPositions[aiPlayer.playerIndex];
-        startPositions[humanPlayer.playerIndex] = aiStartPos;
-        startPositions[aiPlayer.playerIndex] = humanStartPos;
-
-        // Also swap in playerRegions for consistent tracking
-        const humanLandmass = playerRegions[humanPlayer.playerIndex]?.landmassId;
-        const aiLandmass = playerRegions[aiPlayer.playerIndex]?.landmassId;
-        if (playerRegions[humanPlayer.playerIndex]) {
-          playerRegions[humanPlayer.playerIndex].landmassId = aiLandmass;
-        }
-        if (playerRegions[aiPlayer.playerIndex]) {
-          playerRegions[aiPlayer.playerIndex].landmassId = humanLandmass;
-        }
-
-        const humanNewX = aiStartPos % iWidth;
-        const humanNewY = Math.floor(aiStartPos / iWidth);
-        const aiNewX = humanStartPos % iWidth;
-        const aiNewY = Math.floor(humanStartPos / iWidth);
-        console.log(`[ContinentsPP]   Human now at (${humanNewX}, ${humanNewY}), AI now at (${aiNewX}, ${aiNewY})`);
       } else {
-        console.log(`[ContinentsPP] No suitable AI found to swap with - human may be isolated`);
+        // Small continent with capacity = 1 - human must move to a larger continent
+        console.log(`[ContinentsPP] Continent too small (capacity ${capacity}) - moving human to larger continent`);
+
+        // Find best continent to move human to (prefer one with capacity for human + existing players)
+        let bestTarget = null;
+        let bestScore = -1;
+
+        for (const [otherContId, otherPlayers] of playersPerContinent) {
+          if (otherContId === continentId) continue;
+          const otherCapacity = getContinentCapacity(otherContId);
+          const hasRoom = otherCapacity > otherPlayers.length;
+          const otherAis = otherPlayers.filter(p => !p.isHuman);
+
+          // Score: prefer continents with room and some AI companions
+          if (hasRoom && otherAis.length >= 1) {
+            const score = otherCapacity - otherPlayers.length + otherAis.length;
+            if (score > bestScore) {
+              bestScore = score;
+              bestTarget = { continentId: otherContId, players: otherPlayers, ai: otherAis[0] };
+            }
+          }
+        }
+
+        if (bestTarget) {
+          const humanPlayer = humansHere[0];
+          const aiPlayer = bestTarget.ai;
+
+          console.log(`[ContinentsPP] Swap details (small continent case):`);
+          console.log(`[ContinentsPP]   Human playerIndex: ${humanPlayer.playerIndex}, AI playerIndex: ${aiPlayer.playerIndex}`);
+          console.log(`[ContinentsPP]   Before swap: startPositions[${humanPlayer.playerIndex}]=${startPositions[humanPlayer.playerIndex]}, startPositions[${aiPlayer.playerIndex}]=${startPositions[aiPlayer.playerIndex]}`);
+
+          const humanStartPos = startPositions[humanPlayer.playerIndex];
+          const aiStartPos = startPositions[aiPlayer.playerIndex];
+          startPositions[humanPlayer.playerIndex] = aiStartPos;
+          startPositions[aiPlayer.playerIndex] = humanStartPos;
+
+          console.log(`[ContinentsPP]   After swap: startPositions[${humanPlayer.playerIndex}]=${startPositions[humanPlayer.playerIndex]}, startPositions[${aiPlayer.playerIndex}]=${startPositions[aiPlayer.playerIndex]}`);
+
+          const humanLandmass = playerRegions[humanPlayer.playerIndex]?.landmassId;
+          const aiLandmass = playerRegions[aiPlayer.playerIndex]?.landmassId;
+          if (playerRegions[humanPlayer.playerIndex]) {
+            playerRegions[humanPlayer.playerIndex].landmassId = aiLandmass;
+          }
+          if (playerRegions[aiPlayer.playerIndex]) {
+            playerRegions[aiPlayer.playerIndex].landmassId = humanLandmass;
+          }
+
+          const humanNewX = aiStartPos % iWidth;
+          const humanNewY = Math.floor(aiStartPos / iWidth);
+          console.log(`[ContinentsPP] Human (index ${humanPlayer.playerIndex}) moved to (${humanNewX}, ${humanNewY})`);
+        } else {
+          console.log(`[ContinentsPP] No suitable continent found for human - may remain isolated`);
+        }
       }
+    }
+    // Case 2: Human has companions but continent is overcrowded
+    else if (currentCount > capacity) {
+      console.log(`[ContinentsPP] Continent ${continentId} is overcrowded: ${currentCount} players, capacity: ${capacity}`);
+      // The existing MIN_PLAYER_DISTANCE enforcement will handle this case
+      // by swapping overcrowded players to other positions
+    }
+    // Case 3: Human has adequate companions within capacity - good!
+    else {
+      console.log(`[ContinentsPP] Human has ${aisHere.length} AI companion(s) on continent ${continentId} - OK`);
     }
   }
 
@@ -2512,8 +3036,11 @@ async function generateMap() {
 
   console.log(`[ContinentsPP] === MINIMUM PLAYER DISTANCE CHECK ===`);
 
-  const MIN_PLAYER_DISTANCE = 10;  // Minimum tiles between any two players
+  // Scale minimum distance with map size - larger maps need more separation
+  const MIN_PLAYER_DISTANCE = 8 + mapSizeIndex * 2;  // 8, 10, 12, 14, 16 for Tiny→Huge
   const MAX_SWAP_ATTEMPTS = 20;
+
+  console.log(`[ContinentsPP] MIN_PLAYER_DISTANCE: ${MIN_PLAYER_DISTANCE} tiles`);
 
   // Helper: calculate distance between two plot indices
   const plotDistance = (plotA, plotB) => {
@@ -2712,6 +3239,16 @@ async function generateMap() {
   // FINAL PLAYER REPORT
   // Comprehensive summary of all player placements for verification
   //────────────────────────────────────────────────────────────────────────────
+
+  // Debug: Log startPositions array state before final report
+  console.log(`[ContinentsPP] === DEBUG: startPositions array state ===`);
+  for (let i = 0; i < Math.min(startPositions.length, 8); i++) {
+    const plot = startPositions[i];
+    const x = plot % iWidth;
+    const y = Math.floor(plot / iWidth);
+    const isHuman = Players.isHuman(aliveMajorIds[i]);
+    console.log(`[ContinentsPP]   startPositions[${i}] = ${plot} → (${x}, ${y}) - ${isHuman ? 'HUMAN' : 'AI'}`);
+  }
 
   console.log(`[ContinentsPP] === FINAL PLAYER REPORT ===`);
   console.log(`[ContinentsPP] Distribution Mode: ${DISTRIBUTION_MODE_NAMES[playerDistributionMode]} (${playerDistributionMode})`);
@@ -3013,12 +3550,102 @@ async function generateMap() {
 
   assignAdvancedStartRegions();
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DISTANT LANDS DIAGNOSTIC
+  // Test if player.isDistantLands() works correctly with custom region IDs
+  // ═══════════════════════════════════════════════════════════════════════════
+  console.log(`[ContinentsPP] === DISTANT LANDS DIAGNOSTIC ===`);
+
+  // Get sample tiles from each major continent
+  const continentSampleTiles = new Map(); // continentId -> {x, y}
+  for (const row of tiles) {
+    for (const tile of row) {
+      if (tile.landmassId > 0 && tile.landmassId <= numMajorContinents) {
+        if (!continentSampleTiles.has(tile.landmassId)) {
+          continentSampleTiles.set(tile.landmassId, { x: tile.coord.x, y: tile.coord.y });
+        }
+      }
+    }
+  }
+
+  console.log(`[ContinentsPP] Sample tiles from each continent:`);
+  for (const [continentId, coord] of continentSampleTiles) {
+    const regionId = GameplayMap.getLandmassRegionId(coord.x, coord.y);
+    console.log(`[ContinentsPP]   Continent ${continentId}: tile (${coord.x}, ${coord.y}), regionId=${regionId}`);
+  }
+
+  // Test isDistantLands for each player against each continent
+  console.log(`[ContinentsPP] Testing player.isDistantLands() for each player:`);
+  for (const playerId of aliveMajorIds) {
+    const player = Players.get(playerId);
+    const isHuman = Players.isHuman(playerId);
+    const playerType = isHuman ? 'HUMAN' : 'AI';
+
+    // Try to get player's start position
+    let playerStartContinent = '?';
+    for (let i = 0; i < startPositions.length; i++) {
+      if (startPositions[i].playerId === playerId) {
+        const startX = startPositions[i].x;
+        const startY = startPositions[i].y;
+        const startRegion = GameplayMap.getLandmassRegionId(startX, startY);
+        playerStartContinent = `region=${startRegion} at (${startX},${startY})`;
+        break;
+      }
+    }
+
+    console.log(`[ContinentsPP]   Player ${playerId} (${playerType}) - start: ${playerStartContinent}`);
+
+    // Check if isDistantLands method exists
+    if (player && typeof player.isDistantLands === 'function') {
+      for (const [continentId, coord] of continentSampleTiles) {
+        try {
+          const isDistant = player.isDistantLands(coord);
+          const regionId = GameplayMap.getLandmassRegionId(coord.x, coord.y);
+          console.log(`[ContinentsPP]     → Continent ${continentId} (region ${regionId}): isDistantLands=${isDistant}`);
+        } catch (e) {
+          console.log(`[ContinentsPP]     → Continent ${continentId}: ERROR - ${e.message}`);
+        }
+      }
+    } else if (player) {
+      // Try alternative: check what methods are available on player object
+      const methods = [];
+      for (const key in player) {
+        if (typeof player[key] === 'function') {
+          methods.push(key);
+        }
+      }
+      console.log(`[ContinentsPP]     isDistantLands NOT available. Player methods: ${methods.slice(0, 20).join(', ')}${methods.length > 20 ? '...' : ''}`);
+
+      // Try alternative approaches
+      try {
+        // Maybe it's a property, not a method?
+        if ('isDistantLands' in player) {
+          console.log(`[ContinentsPP]     isDistantLands exists as property: ${typeof player.isDistantLands}`);
+        }
+        // Check for related methods
+        if (typeof player.getStartingRegion === 'function') {
+          console.log(`[ContinentsPP]     player.getStartingRegion(): ${player.getStartingRegion()}`);
+        }
+        if (typeof player.getLandmassRegion === 'function') {
+          console.log(`[ContinentsPP]     player.getLandmassRegion(): ${player.getLandmassRegion()}`);
+        }
+      } catch (e) {
+        console.log(`[ContinentsPP]     Error checking alternatives: ${e.message}`);
+      }
+    } else {
+      console.log(`[ContinentsPP]     Could not get player object`);
+    }
+  }
+
+  console.log(`[ContinentsPP] === END DISTANT LANDS DIAGNOSTIC ===`);
+
   console.log("═══════════════════════════════════════════════════════════════");
   console.log("  CONTINENTS++ MAP GENERATION COMPLETE");
   console.log("═══════════════════════════════════════════════════════════════");
   console.log(`  Land: ${landPercent}% | Water: ${waterPercent}%`);
-  console.log(`  Continents: ${landmassCount} | Players: ${iTotalPlayers} (${humanCount} human, ${aiCount} AI)`);
-  console.log(`  Distribution Mode: ${DISTRIBUTION_MODE_NAMES[playerDistributionMode]} (${playerDistribution})`);
+  console.log(`  Continents: ${landmassCount} (${CONTINENT_COUNT_NAMES[continentCountMode]} mode)`);
+  console.log(`  Players: ${iTotalPlayers} (${humanCount} human, ${aiCount} AI)`);
+  console.log(`  Human Spawns: ${DISTRIBUTION_MODE_NAMES[playerDistributionMode]}${humanCount <= 1 ? ' (single-player override)' : ''}`);
   console.log("───────────────────────────────────────────────────────────────");
   console.log(`  Homelands (WEST): ${mapStats.homelandCount} continent(s)`);
   console.log(`  Distant Lands (EAST): ${mapStats.distantLandCount} continent(s)`);

@@ -26,9 +26,6 @@
 					<Item>modules/config/AI_Naval_Override.xml</Item>
 					<Item>modules/config/ContinentNames.xml</Item>
 				</UpdateDatabase>
-				<ImportFiles>
-					<Item>modules/maps/assign-starting-plots.js</Item>
-				</ImportFiles>
 			</Actions>
 		</ActionGroup>
 		<ActionGroup id="shell-mapscript-template" scope="shell" criteria="always">
@@ -49,7 +46,6 @@
 		<File>modules/text/en_us/ContinentNamesText.xml</File>
 	</LocalizedText>
 	<ScriptModules>
-		<Module path="modules/maps/assign-starting-plots.js" />
 		<Module path="modules/maps/continents-plus-plus.js" />
-    </ScriptModules>
+	</ScriptModules>
 </Mod>
