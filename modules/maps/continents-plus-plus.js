@@ -123,6 +123,56 @@ function distanceToLineSegmentWrapped(px, py, x1, y1, x2, y2, mapWidth) {
 }
 
 /**
+ * Evaluates spawn quality for a given position
+ * Used to detect and fix "bad" spawns based on fertility and biome
+ * @param x - X coordinate
+ * @param y - Y coordinate
+ * @param avgFertility - Average fertility for comparison
+ * @returns Object with quality metrics
+ */
+function evaluateSpawnQuality(x, y, avgFertility) {
+  let fertility = 0;
+  let isTundra = false;
+
+  try {
+    fertility = StartPositioner.getPlotFertilityForCoord(x, y);
+    const biome = GameplayMap.getBiomeType(x, y);
+    // BiomeType.BIOME_TUNDRA = 4 typically, but check via comparison
+    isTundra = (biome === 4);  // BIOME_TUNDRA
+  } catch (e) {
+    // If we can't get biome info, assume it's OK
+  }
+
+  const fertilityRatio = avgFertility > 0 ? fertility / avgFertility : 1;
+
+  return {
+    fertility,
+    fertilityRatio,
+    isTundra,
+    // Strict: fertility < 60% avg OR tundra with < 80% fertility
+    isStrictBad: fertilityRatio < 0.6 || (isTundra && fertilityRatio < 0.8),
+    // Loose: only truly terrible spawns (fertility < 30% avg)
+    isLooseBad: fertilityRatio < 0.3
+  };
+}
+
+/**
+ * Calculates wrapped distance between two plot indices
+ */
+function getWrappedPlotDistance(plot1, plot2, iWidth, iHeight) {
+  const x1 = plot1 % iWidth;
+  const y1 = Math.floor(plot1 / iWidth);
+  const x2 = plot2 % iWidth;
+  const y2 = Math.floor(plot2 / iWidth);
+
+  let dx = Math.abs(x1 - x2);
+  if (dx > iWidth / 2) dx = iWidth - dx;  // Wrap around
+  const dy = Math.abs(y1 - y2);
+
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+/**
  * Adds island chains in the corridors between inhabited (homeland) continents
  * Creates stepping-stone archipelagos for naval travel between player start continents
  * @param useCustomRegionIds - If true, assigns each island to nearest inhabited continent's region ID
@@ -3219,8 +3269,121 @@ async function generateMap() {
 
     // Log result based on mode
     if (playerDistributionMode === 0) {
-      // Clustered: close humans are expected
-      console.log(`[ContinentsPP] Clustered mode: Human distance = ${minFoundDistance.toFixed(1)} tiles (close proximity intended)`);
+      //────────────────────────────────────────────────────────────────────────────
+      // CLUSTERED MODE: Enforce proximity between humans
+      // Move humans closer together if they're too spread out
+      //────────────────────────────────────────────────────────────────────────────
+
+      // Target distance scales with map size: 6, 8, 10, 12, 14 for Tiny→Huge
+      const MAX_CLUSTER_DISTANCE = 6 + mapSizeIndex * 2;
+      const IDEAL_CLUSTER_DISTANCE = Math.floor(MAX_CLUSTER_DISTANCE * 0.7);  // Aim for closer
+
+      console.log(`[ContinentsPP] === CLUSTERED MODE: Proximity Enforcement ===`);
+      console.log(`[ContinentsPP]   Current human distance: ${minFoundDistance.toFixed(1)} tiles`);
+      console.log(`[ContinentsPP]   Target max distance: ${MAX_CLUSTER_DISTANCE} tiles (ideal: ${IDEAL_CLUSTER_DISTANCE})`);
+
+      if (minFoundDistance <= MAX_CLUSTER_DISTANCE) {
+        console.log(`[ContinentsPP]   ✓ Humans are clustered within target range`);
+      } else {
+        console.log(`[ContinentsPP]   ⚠ Humans too spread out - enforcing proximity`);
+
+        // Calculate centroid of human positions
+        let centroidX = 0;
+        let centroidY = 0;
+        for (const h of humanStartPositions) {
+          centroidX += h.x;
+          centroidY += h.y;
+        }
+        centroidX = Math.floor(centroidX / humanStartPositions.length);
+        centroidY = Math.floor(centroidY / humanStartPositions.length);
+        console.log(`[ContinentsPP]   Human centroid: (${centroidX}, ${centroidY})`);
+
+        // Find the human farthest from centroid
+        let farthestHuman = null;
+        let maxDistFromCentroid = 0;
+        for (const h of humanStartPositions) {
+          let dx = Math.abs(h.x - centroidX);
+          if (dx > iWidth / 2) dx = iWidth - dx;
+          const dy = Math.abs(h.y - centroidY);
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist > maxDistFromCentroid) {
+            maxDistFromCentroid = dist;
+            farthestHuman = h;
+          }
+        }
+
+        if (farthestHuman && maxDistFromCentroid > MAX_CLUSTER_DISTANCE) {
+          console.log(`[ContinentsPP]   Moving P${farthestHuman.playerIndex} (${maxDistFromCentroid.toFixed(1)} tiles from centroid)`);
+
+          // Build tiles near centroid for relocation
+          const clusterTiles = [];
+          const searchRadius = MAX_CLUSTER_DISTANCE + 5;
+
+          for (let dy = -searchRadius; dy <= searchRadius; dy++) {
+            for (let dx = -searchRadius; dx <= searchRadius; dx++) {
+              const x = (centroidX + dx + iWidth) % iWidth;
+              const y = centroidY + dy;
+              if (y < 0 || y >= iHeight) continue;
+
+              const plotIndex = y * iWidth + x;
+              try {
+                const terrain = GameplayMap.getTerrainType(x, y);
+                if (terrain === TerrainType.TERRAIN_COAST || terrain === TerrainType.TERRAIN_OCEAN) continue;
+
+                // Check distance to centroid
+                let cdx = Math.abs(x - centroidX);
+                if (cdx > iWidth / 2) cdx = iWidth - cdx;
+                const cdy = Math.abs(y - centroidY);
+                const centroidDist = Math.sqrt(cdx * cdx + cdy * cdy);
+                if (centroidDist > MAX_CLUSTER_DISTANCE) continue;
+
+                // Check it's not already used by another player
+                if (startPositions.includes(plotIndex)) continue;
+
+                // Check minimum distance to other humans
+                let minDistToOthers = Infinity;
+                for (const h of humanStartPositions) {
+                  if (h.playerIndex === farthestHuman.playerIndex) continue;
+                  const dist = getWrappedPlotDistance(plotIndex, startPositions[h.playerIndex], iWidth, iHeight);
+                  minDistToOthers = Math.min(minDistToOthers, dist);
+                }
+
+                if (minDistToOthers >= 5) {  // Keep some minimal distance
+                  const fertility = StartPositioner.getPlotFertilityForCoord(x, y);
+                  clusterTiles.push({
+                    x, y, plotIndex,
+                    fertility,
+                    centroidDist,
+                    minDistToOthers
+                  });
+                }
+              } catch (e) {}
+            }
+          }
+
+          // Sort by distance to centroid (closest first), then by fertility
+          clusterTiles.sort((a, b) => {
+            const distDiff = a.centroidDist - b.centroidDist;
+            if (Math.abs(distDiff) > 2) return distDiff;
+            return b.fertility - a.fertility;  // Higher fertility better
+          });
+
+          if (clusterTiles.length > 0) {
+            const newPos = clusterTiles[0];
+            startPositions[farthestHuman.playerIndex] = newPos.plotIndex;
+
+            console.log(`[ContinentsPP]   ✓ Moved P${farthestHuman.playerIndex} from (${farthestHuman.x}, ${farthestHuman.y}) to (${newPos.x}, ${newPos.y})`);
+            console.log(`[ContinentsPP]     Distance to centroid: ${maxDistFromCentroid.toFixed(1)} → ${newPos.centroidDist.toFixed(1)} tiles`);
+            console.log(`[ContinentsPP]     Distance to nearest human: ${newPos.minDistToOthers.toFixed(1)} tiles`);
+
+            // Update position for logging
+            farthestHuman.x = newPos.x;
+            farthestHuman.y = newPos.y;
+          } else {
+            console.log(`[ContinentsPP]   ✗ Could not find suitable position near centroid`);
+          }
+        }
+      }
     } else if (playerDistributionMode === 1) {
       // Spread: verify separation and ENFORCE if needed
       if (allSeparated) {
@@ -3358,9 +3521,278 @@ async function generateMap() {
           console.log(`[ContinentsPP]   This may happen when continents are too close together`);
         }
       }
+
+      //────────────────────────────────────────────────────────────────────────────
+      // SPREAD MODE: SPAWN QUALITY CHECK FOR ALL PLAYERS
+      // Check humans AND AI for "bad" spawns and fix them
+      //────────────────────────────────────────────────────────────────────────────
+
+      console.log(`[ContinentsPP] === SPREAD MODE: Spawn Quality Check ===`);
+
+      // Calculate average fertility across all valid spawn tiles
+      let totalFertility = 0;
+      let fertileTileCount = 0;
+      for (let y = 0; y < iHeight; y++) {
+        for (let x = 0; x < iWidth; x++) {
+          try {
+            const terrain = GameplayMap.getTerrainType(x, y);
+            if (terrain !== TerrainType.TERRAIN_COAST && terrain !== TerrainType.TERRAIN_OCEAN) {
+              const fert = StartPositioner.getPlotFertilityForCoord(x, y);
+              if (fert > 0) {
+                totalFertility += fert;
+                fertileTileCount++;
+              }
+            }
+          } catch (e) {}
+        }
+      }
+      const avgFertility = fertileTileCount > 0 ? totalFertility / fertileTileCount : 100;
+      console.log(`[ContinentsPP]   Average map fertility: ${avgFertility.toFixed(1)} (from ${fertileTileCount} tiles)`);
+
+      // Build list of all players with their spawn quality
+      const playerSpawnQuality = [];
+      for (let i = 0; i < aliveMajorIds.length; i++) {
+        const playerId = aliveMajorIds[i];
+        const plotIndex = startPositions[i];
+        const x = plotIndex % iWidth;
+        const y = Math.floor(plotIndex / iWidth);
+        const isHuman = Players.isHuman(playerId);
+        const quality = evaluateSpawnQuality(x, y, avgFertility);
+
+        playerSpawnQuality.push({
+          playerIndex: i,
+          playerId,
+          isHuman,
+          x, y,
+          plotIndex,
+          quality
+        });
+
+        const statusIcon = quality.isStrictBad ? '⚠' : '✓';
+        const humanTag = isHuman ? '[HUMAN]' : '[AI]';
+        console.log(`[ContinentsPP]   ${statusIcon} P${i} ${humanTag}: fertility=${quality.fertility.toFixed(0)} (${(quality.fertilityRatio * 100).toFixed(0)}% avg)${quality.isTundra ? ' TUNDRA' : ''}`);
+      }
+
+      // Sort by priority: humans with bad spawns first, then AI with bad spawns
+      const badSpawns = playerSpawnQuality.filter(p => p.quality.isStrictBad);
+      badSpawns.sort((a, b) => {
+        if (a.isHuman !== b.isHuman) return a.isHuman ? -1 : 1;  // Humans first
+        return a.quality.fertilityRatio - b.quality.fertilityRatio;  // Worst spawns first
+      });
+
+      if (badSpawns.length === 0) {
+        console.log(`[ContinentsPP]   ✓ All player spawns meet quality threshold`);
+      } else {
+        console.log(`[ContinentsPP]   Found ${badSpawns.length} bad spawn(s) to fix`);
+
+        // Build region tiles map for finding alternatives (reuse if already built)
+        const qualityRegionTiles = new Map();
+        for (let y = 0; y < iHeight; y++) {
+          for (let x = 0; x < iWidth; x++) {
+            const plotIdx = y * iWidth + x;
+            try {
+              const terrain = GameplayMap.getTerrainType(x, y);
+              if (terrain !== TerrainType.TERRAIN_COAST && terrain !== TerrainType.TERRAIN_OCEAN) {
+                const regionId = GameplayMap.getLandmassRegionId(x, y);
+                if (regionId > 0) {
+                  if (!qualityRegionTiles.has(regionId)) {
+                    qualityRegionTiles.set(regionId, []);
+                  }
+                  const fertility = StartPositioner.getPlotFertilityForCoord(x, y);
+                  const biome = GameplayMap.getBiomeType(x, y);
+                  const isTundra = (biome === 4);
+                  qualityRegionTiles.get(regionId).push({ x, y, plotIndex: plotIdx, fertility, isTundra });
+                }
+              }
+            } catch (e) {}
+          }
+        }
+
+        // Sort each region's tiles by fertility (best first)
+        for (const [regionId, tiles] of qualityRegionTiles) {
+          tiles.sort((a, b) => b.fertility - a.fertility);
+        }
+
+        // Track used tiles
+        const qualityUsedTiles = new Set(startPositions);
+        let qualitySwaps = 0;
+
+        for (const badPlayer of badSpawns) {
+          const regionId = GameplayMap.getLandmassRegionId(badPlayer.x, badPlayer.y);
+          const availableTiles = qualityRegionTiles.get(regionId) || [];
+
+          // Find the best non-tundra, high-fertility tile not already used
+          let bestReplacement = null;
+          for (const tile of availableTiles) {
+            if (qualityUsedTiles.has(tile.plotIndex)) continue;
+            if (tile.isTundra) continue;  // Avoid tundra for strict mode
+            if (tile.fertility < avgFertility * 0.6) continue;  // Must be above threshold
+
+            // Check it's not too close to other players (especially humans)
+            let tooClose = false;
+            for (let i = 0; i < startPositions.length; i++) {
+              if (i === badPlayer.playerIndex) continue;
+              const otherPlot = startPositions[i];
+              const dist = getWrappedPlotDistance(tile.plotIndex, otherPlot, iWidth, iHeight);
+              if (dist < 8) {  // Minimum spawn distance
+                tooClose = true;
+                break;
+              }
+            }
+
+            if (!tooClose) {
+              bestReplacement = tile;
+              break;
+            }
+          }
+
+          if (bestReplacement) {
+            // Perform the swap
+            const oldPlot = startPositions[badPlayer.playerIndex];
+            qualityUsedTiles.delete(oldPlot);
+            startPositions[badPlayer.playerIndex] = bestReplacement.plotIndex;
+            qualityUsedTiles.add(bestReplacement.plotIndex);
+
+            const humanTag = badPlayer.isHuman ? '[HUMAN]' : '[AI]';
+            console.log(`[ContinentsPP]   ✓ Fixed P${badPlayer.playerIndex} ${humanTag}: (${badPlayer.x}, ${badPlayer.y}) → (${bestReplacement.x}, ${bestReplacement.y})`);
+            console.log(`[ContinentsPP]     Fertility: ${badPlayer.quality.fertility.toFixed(0)} → ${bestReplacement.fertility.toFixed(0)}`);
+            qualitySwaps++;
+          } else {
+            const humanTag = badPlayer.isHuman ? '[HUMAN]' : '[AI]';
+            console.log(`[ContinentsPP]   ✗ Could not fix P${badPlayer.playerIndex} ${humanTag}: no suitable alternative on region ${regionId}`);
+          }
+        }
+
+        console.log(`[ContinentsPP]   Spawn quality fixes: ${qualitySwaps}/${badSpawns.length}`);
+      }
     } else if (playerDistributionMode === 2) {
-      // Random: just informational
-      console.log(`[ContinentsPP] Random mode: Human distance = ${minFoundDistance.toFixed(1)} tiles`);
+      //────────────────────────────────────────────────────────────────────────────
+      // RANDOM MODE: Add chaos with guardrails
+      // Shuffle positions, allow tundra/close spawns, only fix truly terrible ones
+      //────────────────────────────────────────────────────────────────────────────
+
+      console.log(`[ContinentsPP] === RANDOM MODE: Chaos with Guardrails ===`);
+      console.log(`[ContinentsPP]   Human distance = ${minFoundDistance.toFixed(1)} tiles (no enforcement)`);
+
+      // Calculate average fertility
+      let randomTotalFertility = 0;
+      let randomFertileCount = 0;
+      for (let y = 0; y < iHeight; y++) {
+        for (let x = 0; x < iWidth; x++) {
+          try {
+            const terrain = GameplayMap.getTerrainType(x, y);
+            if (terrain !== TerrainType.TERRAIN_COAST && terrain !== TerrainType.TERRAIN_OCEAN) {
+              const fert = StartPositioner.getPlotFertilityForCoord(x, y);
+              if (fert > 0) {
+                randomTotalFertility += fert;
+                randomFertileCount++;
+              }
+            }
+          } catch (e) {}
+        }
+      }
+      const randomAvgFertility = randomFertileCount > 0 ? randomTotalFertility / randomFertileCount : 100;
+
+      // Check all player spawn quality with loose tolerance
+      console.log(`[ContinentsPP]   Spawn quality report (loose tolerance - only fix < 30% avg):`);
+      const looselyBadSpawns = [];
+      for (let i = 0; i < aliveMajorIds.length; i++) {
+        const playerId = aliveMajorIds[i];
+        const plotIndex = startPositions[i];
+        const x = plotIndex % iWidth;
+        const y = Math.floor(plotIndex / iWidth);
+        const isHuman = Players.isHuman(playerId);
+        const quality = evaluateSpawnQuality(x, y, randomAvgFertility);
+
+        const statusIcon = quality.isLooseBad ? '⚠' : '✓';
+        const humanTag = isHuman ? '[HUMAN]' : '[AI]';
+        console.log(`[ContinentsPP]   ${statusIcon} P${i} ${humanTag}: fertility=${quality.fertility.toFixed(0)} (${(quality.fertilityRatio * 100).toFixed(0)}% avg)${quality.isTundra ? ' TUNDRA' : ''}`);
+
+        if (quality.isLooseBad) {
+          looselyBadSpawns.push({
+            playerIndex: i,
+            playerId,
+            isHuman,
+            x, y,
+            plotIndex,
+            quality
+          });
+        }
+      }
+
+      // Only fix truly terrible spawns (< 30% avg fertility)
+      if (looselyBadSpawns.length === 0) {
+        console.log(`[ContinentsPP]   ✓ No spawns below 30% avg fertility threshold`);
+      } else {
+        console.log(`[ContinentsPP]   Found ${looselyBadSpawns.length} truly terrible spawn(s) - fixing`);
+
+        // Build region tiles for alternatives
+        const randomRegionTiles = new Map();
+        for (let y = 0; y < iHeight; y++) {
+          for (let x = 0; x < iWidth; x++) {
+            const plotIdx = y * iWidth + x;
+            try {
+              const terrain = GameplayMap.getTerrainType(x, y);
+              if (terrain !== TerrainType.TERRAIN_COAST && terrain !== TerrainType.TERRAIN_OCEAN) {
+                const regionId = GameplayMap.getLandmassRegionId(x, y);
+                if (regionId > 0) {
+                  if (!randomRegionTiles.has(regionId)) {
+                    randomRegionTiles.set(regionId, []);
+                  }
+                  const fertility = StartPositioner.getPlotFertilityForCoord(x, y);
+                  randomRegionTiles.get(regionId).push({ x, y, plotIndex: plotIdx, fertility });
+                }
+              }
+            } catch (e) {}
+          }
+        }
+
+        // For random mode, shuffle the good tiles to add randomness
+        const randomSeed = mapSeed + 12345;
+        const randomRng = createSeededRandom(randomSeed);
+
+        for (const [regionId, tiles] of randomRegionTiles) {
+          // Sort by fertility then shuffle top 50%
+          tiles.sort((a, b) => b.fertility - a.fertility);
+          const topHalf = Math.floor(tiles.length * 0.5);
+          // Fisher-Yates shuffle on top half
+          for (let i = topHalf - 1; i > 0; i--) {
+            const j = Math.floor(randomRng() * (i + 1));
+            [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+          }
+        }
+
+        const randomUsedTiles = new Set(startPositions);
+        let randomSwaps = 0;
+
+        for (const badPlayer of looselyBadSpawns) {
+          const regionId = GameplayMap.getLandmassRegionId(badPlayer.x, badPlayer.y);
+          const availableTiles = randomRegionTiles.get(regionId) || [];
+
+          // Find any tile above 30% threshold (loose - allows tundra, close spawns)
+          let replacement = null;
+          for (const tile of availableTiles) {
+            if (randomUsedTiles.has(tile.plotIndex)) continue;
+            if (tile.fertility < randomAvgFertility * 0.3) continue;  // Must be above loose threshold
+
+            replacement = tile;
+            break;
+          }
+
+          if (replacement) {
+            const oldPlot = startPositions[badPlayer.playerIndex];
+            randomUsedTiles.delete(oldPlot);
+            startPositions[badPlayer.playerIndex] = replacement.plotIndex;
+            randomUsedTiles.add(replacement.plotIndex);
+
+            const humanTag = badPlayer.isHuman ? '[HUMAN]' : '[AI]';
+            console.log(`[ContinentsPP]   ✓ Fixed P${badPlayer.playerIndex} ${humanTag}: fertility ${badPlayer.quality.fertility.toFixed(0)} → ${replacement.fertility.toFixed(0)}`);
+            randomSwaps++;
+          }
+        }
+
+        console.log(`[ContinentsPP]   Random mode fixes: ${randomSwaps}/${looselyBadSpawns.length}`);
+      }
     }
   }
 
