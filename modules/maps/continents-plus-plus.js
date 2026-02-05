@@ -3222,12 +3222,141 @@ async function generateMap() {
       // Clustered: close humans are expected
       console.log(`[ContinentsPP] Clustered mode: Human distance = ${minFoundDistance.toFixed(1)} tiles (close proximity intended)`);
     } else if (playerDistributionMode === 1) {
-      // Spread: verify separation
+      // Spread: verify separation and ENFORCE if needed
       if (allSeparated) {
         console.log(`[ContinentsPP] ✓ Spread mode: Humans adequately separated (min: ${minFoundDistance.toFixed(1)}, threshold: ${MIN_HUMAN_DISTANCE})`);
       } else {
         console.log(`[ContinentsPP] ⚠ Spread mode: Humans closer than threshold (min: ${minFoundDistance.toFixed(1)}, threshold: ${MIN_HUMAN_DISTANCE})`);
-        console.log(`[ContinentsPP]   This can happen when there are more humans than available continents`);
+        console.log(`[ContinentsPP]   Attempting to enforce separation by finding alternative positions...`);
+
+        //────────────────────────────────────────────────────────────────────────────
+        // SPREAD MODE ENFORCEMENT
+        // Find pairs that are too close and move one player to a better position
+        //────────────────────────────────────────────────────────────────────────────
+
+        // Build a map of valid land tiles per region for finding alternatives
+        const regionTiles = new Map();  // regionId -> [{x, y, plotIndex, fertility}]
+        for (let y = 0; y < iHeight; y++) {
+          for (let x = 0; x < iWidth; x++) {
+            const plotIndex = y * iWidth + x;
+            try {
+              const terrain = GameplayMap.getTerrainType(x, y);
+              // Only consider land tiles (not water/coast)
+              if (terrain !== TerrainType.TERRAIN_COAST && terrain !== TerrainType.TERRAIN_OCEAN) {
+                const regionId = GameplayMap.getLandmassRegionId(x, y);
+                if (regionId > 0) {
+                  if (!regionTiles.has(regionId)) {
+                    regionTiles.set(regionId, []);
+                  }
+                  const fertility = StartPositioner.getPlotFertilityForCoord(x, y);
+                  regionTiles.get(regionId).push({ x, y, plotIndex, fertility });
+                }
+              }
+            } catch (e) {
+              // Skip invalid tiles
+            }
+          }
+        }
+
+        // Sort each region's tiles by fertility (best first)
+        for (const [regionId, tiles] of regionTiles) {
+          tiles.sort((a, b) => b.fertility - a.fertility);
+        }
+
+        // Track which tiles are already used
+        const usedTiles = new Set(startPositions);
+
+        // Find pairs that are too close and fix them
+        let swapsMade = 0;
+        const MAX_SWAPS = 5;  // Safety limit
+
+        for (let i = 0; i < humanStartPositions.length && swapsMade < MAX_SWAPS; i++) {
+          for (let j = i + 1; j < humanStartPositions.length && swapsMade < MAX_SWAPS; j++) {
+            const h1 = humanStartPositions[i];
+            const h2 = humanStartPositions[j];
+
+            // Recalculate distance (positions may have changed from previous swaps)
+            const currentPlot1 = startPositions[h1.playerIndex];
+            const currentPlot2 = startPositions[h2.playerIndex];
+            const x1 = currentPlot1 % iWidth;
+            const y1 = Math.floor(currentPlot1 / iWidth);
+            const x2 = currentPlot2 % iWidth;
+            const y2 = Math.floor(currentPlot2 / iWidth);
+
+            let dx = Math.abs(x1 - x2);
+            if (dx > iWidth / 2) dx = iWidth - dx;
+            const dy = Math.abs(y1 - y2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance >= MIN_HUMAN_DISTANCE) continue;
+
+            console.log(`[ContinentsPP]   Pair ${h1.playerIndex}-${h2.playerIndex} too close (${distance.toFixed(1)} tiles)`);
+
+            // Try to move player j (the second one) to a better position
+            const regionId = GameplayMap.getLandmassRegionId(x2, y2);
+            const availableTiles = regionTiles.get(regionId) || [];
+
+            // Find a tile on this region that is farther from player i
+            let bestAlternative = null;
+            let bestDistance = distance;
+
+            for (const tile of availableTiles) {
+              if (usedTiles.has(tile.plotIndex)) continue;
+
+              // Calculate distance from this tile to h1
+              let altDx = Math.abs(tile.x - x1);
+              if (altDx > iWidth / 2) altDx = iWidth - altDx;
+              const altDy = Math.abs(tile.y - y1);
+              const altDistance = Math.sqrt(altDx * altDx + altDy * altDy);
+
+              // Also check distance from all other humans
+              let minDistToOthers = altDistance;
+              for (let k = 0; k < humanStartPositions.length; k++) {
+                if (k === j) continue;
+                const hk = humanStartPositions[k];
+                const currentPlotK = startPositions[hk.playerIndex];
+                const xk = currentPlotK % iWidth;
+                const yk = Math.floor(currentPlotK / iWidth);
+                let dxk = Math.abs(tile.x - xk);
+                if (dxk > iWidth / 2) dxk = iWidth - dxk;
+                const dyk = Math.abs(tile.y - yk);
+                const distK = Math.sqrt(dxk * dxk + dyk * dyk);
+                minDistToOthers = Math.min(minDistToOthers, distK);
+              }
+
+              // Accept if it improves minimum distance significantly
+              if (minDistToOthers > bestDistance + 3 && minDistToOthers >= MIN_HUMAN_DISTANCE * 0.8) {
+                bestAlternative = tile;
+                bestDistance = minDistToOthers;
+              }
+            }
+
+            if (bestAlternative) {
+              // Swap to the better position
+              const oldPlot = startPositions[h2.playerIndex];
+              usedTiles.delete(oldPlot);
+              startPositions[h2.playerIndex] = bestAlternative.plotIndex;
+              usedTiles.add(bestAlternative.plotIndex);
+
+              // Update humanStartPositions for subsequent checks
+              h2.x = bestAlternative.x;
+              h2.y = bestAlternative.y;
+
+              console.log(`[ContinentsPP]   ✓ Moved P${h2.playerIndex} from (${x2}, ${y2}) to (${bestAlternative.x}, ${bestAlternative.y})`);
+              console.log(`[ContinentsPP]     New distance: ${bestDistance.toFixed(1)} tiles (was ${distance.toFixed(1)})`);
+              swapsMade++;
+            } else {
+              console.log(`[ContinentsPP]   ✗ No better position found for P${h2.playerIndex} on region ${regionId}`);
+            }
+          }
+        }
+
+        if (swapsMade > 0) {
+          console.log(`[ContinentsPP] Spread mode enforcement: Made ${swapsMade} position swap(s)`);
+        } else {
+          console.log(`[ContinentsPP] Spread mode enforcement: Unable to find better positions`);
+          console.log(`[ContinentsPP]   This may happen when continents are too close together`);
+        }
       }
     } else if (playerDistributionMode === 2) {
       // Random: just informational
