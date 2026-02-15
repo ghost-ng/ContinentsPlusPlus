@@ -1665,16 +1665,54 @@ async function generateMap() {
       }
     }
 
-    // Check: if only 1 inhabited continent, ensure human has AI companion
-    const inhabitedContinentCount = continentInfo.filter(c => c.assignedPlayers > 0).length;
-    if (inhabitedContinentCount === 1 && aisToAssign > 0) {
-      const singleInhabited = continentInfo.find(c => c.hasHuman);
-      if (singleInhabited && singleInhabited.assignedPlayers === 1) {
-        // Human is alone on only inhabited continent - no bridges possible
-        console.log(`[ContinentsPP]   WARNING: Human alone on only inhabited continent - adding AI companion`);
-        if (singleInhabited.assignedPlayers < singleInhabited.maxPlayers) {
-          singleInhabited.assignedPlayers++;
-          aisToAssign--;
+    // COMPANION GUARANTEE: Every human continent must have at least 2 players
+    // Reserve AIs for companion duty BEFORE proportional distribution
+    const soloHumanContinents = continentInfo.filter(c => c.hasHuman && c.assignedPlayers === 1);
+    if (soloHumanContinents.length > 0) {
+      console.log(`[ContinentsPP]   Companion guarantee: ${soloHumanContinents.length} human continent(s) need companions`);
+
+      // Phase 1: Assign available AIs as companions
+      for (const continent of soloHumanContinents) {
+        if (aisToAssign <= 0) break;
+        continent.assignedPlayers++;
+        aisToAssign--;
+        console.log(`[ContinentsPP]     +1 AI companion → Continent ${continent.index + 1}`);
+      }
+
+      // Phase 2: If not enough AIs, consolidate lonely humans onto populated continents
+      const stillAlone = continentInfo.filter(c => c.hasHuman && c.assignedPlayers === 1);
+      if (stillAlone.length > 0) {
+        console.log(`[ContinentsPP]   Not enough AIs - consolidating ${stillAlone.length} lonely human(s)`);
+        for (const lonely of stillAlone) {
+          // Prefer another human continent with room
+          const recipient = continentInfo.find(
+            c => c !== lonely && c.assignedPlayers >= 2 && c.assignedPlayers < c.maxPlayers
+          );
+          if (recipient) {
+            lonely.assignedPlayers--;
+            lonely.hasHuman = false;
+            continentsWithHumans.delete(lonely.index);
+            recipient.assignedPlayers++;
+            if (!recipient.hasHuman) {
+              recipient.hasHuman = true;
+              continentsWithHumans.add(recipient.index);
+            }
+            console.log(`[ContinentsPP]     Human consolidated: Continent ${lonely.index + 1} → ${recipient.index + 1}`);
+          } else {
+            // Last resort: find ANY continent with players
+            const anyTarget = continentInfo.find(
+              c => c !== lonely && c.assignedPlayers > 0
+            );
+            if (anyTarget) {
+              lonely.assignedPlayers--;
+              lonely.hasHuman = false;
+              continentsWithHumans.delete(lonely.index);
+              anyTarget.assignedPlayers++;
+              anyTarget.hasHuman = true;
+              continentsWithHumans.add(anyTarget.index);
+              console.log(`[ContinentsPP]     Human consolidated (fallback): Continent ${lonely.index + 1} → ${anyTarget.index + 1}`);
+            }
+          }
         }
       }
     }
@@ -1765,8 +1803,8 @@ async function generateMap() {
     // POST-CHECK: With 1 human in Random mode, ensure NO continent has exactly 1 player
     // Because that 1 player could be the human, leaving them isolated
     // Goal: every continent has 0 or 2+ players
-    if (humanCount === 1 && iTotalPlayers >= 2) {
-      console.log(`[ContinentsPP] Random: 1 human - checking for single-player continents`);
+    if (humanCount >= 1 && iTotalPlayers >= 2) {
+      console.log(`[ContinentsPP] Random: ${humanCount} human(s) - checking for single-player continents`);
 
       let fixNeeded = true;
       let iterations = 0;
@@ -1821,6 +1859,81 @@ async function generateMap() {
     }
 
     console.log(`[ContinentsPP] Players distributed proportionally by continent size`);
+  }
+
+  //────────────────────────────────────────────────────────────────────────────
+  // UNIVERSAL COMPANION GUARANTEE (all modes, final safety net)
+  // Every continent with a human must have at least 2 players total
+  // For Random mode (no hasHuman tracking): ensure no single-player continents
+  //────────────────────────────────────────────────────────────────────────────
+  if (iTotalPlayers >= 2) {
+    console.log(`[ContinentsPP] === COMPANION GUARANTEE (Final Check) ===`);
+    let guaranteeFixes = 0;
+
+    // Check human-flagged continents (Clustered and Spread modes set hasHuman)
+    for (const continent of continentInfo) {
+      if (continent.hasHuman && continent.assignedPlayers < 2) {
+        console.log(`[ContinentsPP]   Continent ${continent.index + 1} has human but only ${continent.assignedPlayers} player(s)`);
+
+        // Try to pull a player from a continent with 3+
+        const donor = continentInfo.find(c => c !== continent && c.assignedPlayers >= 3);
+        if (donor) {
+          donor.assignedPlayers--;
+          continent.assignedPlayers++;
+          guaranteeFixes++;
+          console.log(`[ContinentsPP]   Pulled 1 player: Continent ${donor.index + 1} (${donor.assignedPlayers}) → ${continent.index + 1} (${continent.assignedPlayers})`);
+        } else {
+          // Consolidate: move human to a populated continent
+          const recipient = continentInfo.find(
+            c => c !== continent && c.assignedPlayers >= 2 && c.assignedPlayers < c.maxPlayers
+          );
+          if (recipient) {
+            continent.assignedPlayers--;
+            continent.hasHuman = false;
+            recipient.assignedPlayers++;
+            recipient.hasHuman = true;
+            guaranteeFixes++;
+            console.log(`[ContinentsPP]   Human consolidated: Continent ${continent.index + 1} → ${recipient.index + 1}`);
+          }
+        }
+      }
+    }
+
+    // Safety net: fix ANY remaining single-player continent (covers Random mode)
+    for (const continent of continentInfo) {
+      if (continent.assignedPlayers !== 1) continue;
+      const donor = continentInfo.find(c => c !== continent && c.assignedPlayers >= 3);
+      if (donor) {
+        donor.assignedPlayers--;
+        continent.assignedPlayers++;
+        guaranteeFixes++;
+        console.log(`[ContinentsPP]   Fixed single-player Continent ${continent.index + 1}: pulled from ${donor.index + 1}`);
+      } else {
+        const recipient = continentInfo.find(
+          c => c !== continent && c.assignedPlayers >= 2 && c.assignedPlayers < c.maxPlayers
+        );
+        if (recipient) {
+          continent.assignedPlayers--;
+          recipient.assignedPlayers++;
+          guaranteeFixes++;
+          console.log(`[ContinentsPP]   Consolidated single player: Continent ${continent.index + 1} → ${recipient.index + 1}`);
+        }
+      }
+    }
+
+    if (guaranteeFixes > 0) {
+      console.log(`[ContinentsPP]   Applied ${guaranteeFixes} companion guarantee fix(es)`);
+    } else {
+      console.log(`[ContinentsPP]   All continents satisfy companion guarantee`);
+    }
+
+    // CAPACITY TRACKING: Log final per-continent breakdown
+    console.log(`[ContinentsPP] === CAPACITY TRACKING ===`);
+    for (const continent of continentInfo) {
+      const utilization = continent.maxPlayers > 0
+        ? ((continent.assignedPlayers / continent.maxPlayers) * 100).toFixed(0) : 0;
+      console.log(`[ContinentsPP]   Continent ${continent.index + 1}: ${continent.assignedPlayers}/${continent.maxPlayers} players (${utilization}% capacity)${continent.hasHuman ? ' [HUMAN]' : ''}`);
+    }
   }
 
   // Apply distribution to generatorSettings (restore original index order)
@@ -2957,13 +3070,9 @@ async function generateMap() {
   // Configuration for dynamic continent capacity - SCALES WITH MAP SIZE
   // Larger maps have more space, so we increase requirements proportionally
   const MIN_TILES_PER_PLAYER = 60 + mapSizeIndex * 10;  // 60, 70, 80, 90, 100 for Tiny→Huge
-  const MIN_COMPANION_SEPARATION = 8 + mapSizeIndex * 2;  // 8, 10, 12, 14, 16 for Tiny→Huge
 
-  console.log(`[ContinentsPP] Distance scaling for ${MAP_SIZE_CONFIGS[mapSizeIndex]?.name || 'UNKNOWN'} map:`);
+  console.log(`[ContinentsPP] Capacity scaling for ${MAP_SIZE_CONFIGS[mapSizeIndex]?.name || 'UNKNOWN'} map:`);
   console.log(`[ContinentsPP]   MIN_TILES_PER_PLAYER: ${MIN_TILES_PER_PLAYER}`);
-  console.log(`[ContinentsPP]   MIN_COMPANION_SEPARATION: ${MIN_COMPANION_SEPARATION}`);
-
-  // Helper: get continent ID from plot index using game's continent stamping
 
   // Helper: get continent ID from plot index using game's continent stamping
   const getGameContinentFromPlot = (plotIndex) => {
@@ -2977,21 +3086,22 @@ async function generateMap() {
     }
   };
 
-  // Build map of GAME CONTINENT -> players on it (using actual positions from startPositions)
-  const playersPerContinent = new Map();  // continentId -> [{playerIndex, isHuman, plotIndex}]
-  for (let i = 0; i < aliveMajorIds.length; i++) {
-    const playerId = aliveMajorIds[i];
-    const plotIndex = startPositions[i];
-    const continentId = getGameContinentFromPlot(plotIndex);
-    const isHuman = Players.isHuman(playerId);
-
-    if (continentId >= 0) {
-      if (!playersPerContinent.has(continentId)) {
-        playersPerContinent.set(continentId, []);
+  // Helper: build map of game continent -> players from current startPositions
+  // Returns a fresh Map each call (used iteratively after swaps)
+  const buildPlayerContinentMap = () => {
+    const map = new Map();
+    for (let i = 0; i < aliveMajorIds.length; i++) {
+      const playerId = aliveMajorIds[i];
+      const plotIndex = startPositions[i];
+      const continentId = getGameContinentFromPlot(plotIndex);
+      const isHuman = Players.isHuman(playerId);
+      if (continentId >= 0) {
+        if (!map.has(continentId)) map.set(continentId, []);
+        map.get(continentId).push({ playerIndex: i, isHuman, playerId, plotIndex });
       }
-      playersPerContinent.get(continentId).push({ playerIndex: i, isHuman, playerId, plotIndex });
     }
-  }
+    return map;
+  };
 
   // Count tiles per game continent to calculate capacity
   const continentTileCounts = new Map();  // continentId -> tile count
@@ -3014,9 +3124,10 @@ async function generateMap() {
     return Math.floor(tiles / MIN_TILES_PER_PLAYER);
   };
 
-  // Log current distribution by GAME continent with capacity
+  // Log initial distribution by GAME continent with capacity
+  let playerMap = buildPlayerContinentMap();
   console.log(`[ContinentsPP] Distribution by GAME continent (after start position assignment):`);
-  for (const [continentId, players] of playersPerContinent) {
+  for (const [continentId, players] of playerMap) {
     const hCount = players.filter(p => p.isHuman).length;
     const aCount = players.filter(p => !p.isHuman).length;
     const tiles = continentTileCounts.get(continentId) || 0;
@@ -3024,169 +3135,103 @@ async function generateMap() {
     console.log(`[ContinentsPP]   Continent ${continentId}: ${players.length} players (${hCount} human, ${aCount} AI) - ${tiles} tiles, capacity: ${capacity}`);
   }
 
-  // Check if human's continent situation needs correction
-  // Now uses capacity-aware logic: large continents can support multiple players
-  const inhabitedContinents = Array.from(playersPerContinent.entries()).filter(([_, p]) => p.length > 0);
+  // Iterative isolation fix: process ALL isolated humans, rebuild tracking after each round
+  const MAX_ISOLATION_ITERATIONS = 5;
+  let totalIsolationFixes = 0;
 
-  // Helper: calculate distance between two plot indices
-  const plotDistanceForIsolation = (plotA, plotB) => {
-    const ax = plotA % iWidth;
-    const ay = Math.floor(plotA / iWidth);
-    const bx = plotB % iWidth;
-    const by = Math.floor(plotB / iWidth);
-    let dx = Math.abs(ax - bx);
-    if (dx > iWidth / 2) dx = iWidth - dx;  // Handle wrap
-    const dy = Math.abs(ay - by);
-    return Math.sqrt(dx * dx + dy * dy);
-  };
+  for (let isolationIter = 0; isolationIter < MAX_ISOLATION_ITERATIONS; isolationIter++) {
+    // Rebuild from current startPositions (reflects any prior swaps)
+    playerMap = buildPlayerContinentMap();
 
-  for (const [continentId, players] of playersPerContinent) {
-    const humansHere = players.filter(p => p.isHuman);
-    const aisHere = players.filter(p => !p.isHuman);
+    // Find ALL isolated humans (alone on their game continent)
+    const isolatedHumans = [];
+    for (const [continentId, players] of playerMap) {
+      if (players.length >= 2) continue;  // Has companion(s) - OK
+      const humans = players.filter(p => p.isHuman);
+      if (humans.length === 0) continue;  // AI alone - fine
+      isolatedHumans.push({
+        continentId,
+        human: humans[0],
+        capacity: getContinentCapacity(continentId),
+        tiles: continentTileCounts.get(continentId) || 0
+      });
+    }
 
-    // Skip continents with no humans
-    if (humansHere.length === 0) continue;
-
-    const capacity = getContinentCapacity(continentId);
-    const currentCount = players.length;
-
-    console.log(`[ContinentsPP] Human's continent ${continentId}: ${currentCount} players, capacity: ${capacity}`);
-
-    // Case 1: Human is completely alone - try to add companions
-    if (currentCount === 1) {
-      console.log(`[ContinentsPP] Human is alone on continent ${continentId}`);
-
-      if (capacity >= 2) {
-        // Large enough continent - try to bring AIs here
-        console.log(`[ContinentsPP] Continent has capacity for ${capacity} players - looking for AIs to bring here`);
-
-        // Find AIs from overcrowded continents that we can bring here
-        const humanPlot = humansHere[0].plotIndex;
-        let aisToMove = [];
-
-        for (const [otherContId, otherPlayers] of playersPerContinent) {
-          if (otherContId === continentId) continue;
-          const otherCapacity = getContinentCapacity(otherContId);
-          const otherAis = otherPlayers.filter(p => !p.isHuman);
-
-          // Can steal an AI if other continent has more players than needed OR has excess AIs
-          if (otherPlayers.length > 1 && otherAis.length >= 1) {
-            for (const ai of otherAis) {
-              // Check if moving this AI leaves the other continent with at least 1 player
-              if (otherPlayers.length - 1 >= 1) {
-                aisToMove.push({ ai, fromContinent: otherContId, otherPlayers });
-              }
-            }
-          }
-        }
-
-        // Move AIs to human's continent until at capacity or no more candidates
-        const targetCompanions = Math.min(capacity - 1, aisToMove.length);  // capacity - 1 because human is already there
-        console.log(`[ContinentsPP] Found ${aisToMove.length} potential AI companions, target: ${targetCompanions}`);
-
-        for (let i = 0; i < targetCompanions; i++) {
-          const candidate = aisToMove[i];
-          const aiPlayer = candidate.ai;
-
-          // Swap human with AI from crowded continent - human joins companions, AI gets isolation
-          const humanPlayer = humansHere[0];
-
-          console.log(`[ContinentsPP] Swap details:`);
-          console.log(`[ContinentsPP]   Human playerIndex: ${humanPlayer.playerIndex}, AI playerIndex: ${aiPlayer.playerIndex}`);
-          console.log(`[ContinentsPP]   Before swap: startPositions[${humanPlayer.playerIndex}]=${startPositions[humanPlayer.playerIndex]}, startPositions[${aiPlayer.playerIndex}]=${startPositions[aiPlayer.playerIndex]}`);
-
-          const humanStartPos = startPositions[humanPlayer.playerIndex];
-          const aiStartPos = startPositions[aiPlayer.playerIndex];
-
-          startPositions[humanPlayer.playerIndex] = aiStartPos;
-          startPositions[aiPlayer.playerIndex] = humanStartPos;
-
-          console.log(`[ContinentsPP]   After swap: startPositions[${humanPlayer.playerIndex}]=${startPositions[humanPlayer.playerIndex]}, startPositions[${aiPlayer.playerIndex}]=${startPositions[aiPlayer.playerIndex]}`);
-
-          // Update playerRegions
-          const humanLandmass = playerRegions[humanPlayer.playerIndex]?.landmassId;
-          const aiLandmass = playerRegions[aiPlayer.playerIndex]?.landmassId;
-          if (playerRegions[humanPlayer.playerIndex]) {
-            playerRegions[humanPlayer.playerIndex].landmassId = aiLandmass;
-          }
-          if (playerRegions[aiPlayer.playerIndex]) {
-            playerRegions[aiPlayer.playerIndex].landmassId = humanLandmass;
-          }
-
-          const humanNewX = aiStartPos % iWidth;
-          const humanNewY = Math.floor(aiStartPos / iWidth);
-          console.log(`[ContinentsPP] Human (index ${humanPlayer.playerIndex}) moved to (${humanNewX}, ${humanNewY}) on continent ${candidate.fromContinent}`);
-
-          // Only need one swap to get human to company
-          break;
-        }
-
+    if (isolatedHumans.length === 0) {
+      if (isolationIter === 0) {
+        console.log(`[ContinentsPP] All humans have companions on their game continents`);
       } else {
-        // Small continent with capacity = 1 - human must move to a larger continent
-        console.log(`[ContinentsPP] Continent too small (capacity ${capacity}) - moving human to larger continent`);
+        console.log(`[ContinentsPP] Isolation fix complete after ${isolationIter} round(s), ${totalIsolationFixes} swap(s)`);
+      }
+      break;
+    }
 
-        // Find best continent to move human to (prefer one with capacity for human + existing players)
-        let bestTarget = null;
-        let bestScore = -1;
+    console.log(`[ContinentsPP] Found ${isolatedHumans.length} isolated human(s) - fixing (round ${isolationIter + 1})`);
+    let fixedThisRound = false;
 
-        for (const [otherContId, otherPlayers] of playersPerContinent) {
-          if (otherContId === continentId) continue;
-          const otherCapacity = getContinentCapacity(otherContId);
-          const hasRoom = otherCapacity > otherPlayers.length;
-          const otherAis = otherPlayers.filter(p => !p.isHuman);
+    for (const isolated of isolatedHumans) {
+      const { continentId, human, capacity, tiles } = isolated;
+      console.log(`[ContinentsPP]   Human P${human.playerIndex} alone on continent ${continentId} (${tiles} tiles, capacity ${capacity})`);
 
-          // Score: prefer continents with room and some AI companions
-          if (hasRoom && otherAis.length >= 1) {
-            const score = otherCapacity - otherPlayers.length + otherAis.length;
-            if (score > bestScore) {
-              bestScore = score;
-              bestTarget = { continentId: otherContId, players: otherPlayers, ai: otherAis[0] };
-            }
+      // Strategy: swap human with an AI from a populated continent
+      // Human moves to the populated continent (gains companions)
+      // AI moves to the lonely continent (AI alone is acceptable)
+      let bestSwap = null;
+      let bestScore = -1;
+
+      for (const [otherContId, otherPlayers] of playerMap) {
+        if (otherContId === continentId) continue;
+        if (otherPlayers.length < 2) continue;  // Don't steal from another small continent
+
+        const otherAis = otherPlayers.filter(p => !p.isHuman);
+        for (const ai of otherAis) {
+          // Score: prefer continents with more players (safer to lose one)
+          const score = otherPlayers.length * 10 + getContinentCapacity(otherContId);
+          if (score > bestScore) {
+            bestScore = score;
+            bestSwap = { ai, fromContinent: otherContId, fromCount: otherPlayers.length };
           }
-        }
-
-        if (bestTarget) {
-          const humanPlayer = humansHere[0];
-          const aiPlayer = bestTarget.ai;
-
-          console.log(`[ContinentsPP] Swap details (small continent case):`);
-          console.log(`[ContinentsPP]   Human playerIndex: ${humanPlayer.playerIndex}, AI playerIndex: ${aiPlayer.playerIndex}`);
-          console.log(`[ContinentsPP]   Before swap: startPositions[${humanPlayer.playerIndex}]=${startPositions[humanPlayer.playerIndex]}, startPositions[${aiPlayer.playerIndex}]=${startPositions[aiPlayer.playerIndex]}`);
-
-          const humanStartPos = startPositions[humanPlayer.playerIndex];
-          const aiStartPos = startPositions[aiPlayer.playerIndex];
-          startPositions[humanPlayer.playerIndex] = aiStartPos;
-          startPositions[aiPlayer.playerIndex] = humanStartPos;
-
-          console.log(`[ContinentsPP]   After swap: startPositions[${humanPlayer.playerIndex}]=${startPositions[humanPlayer.playerIndex]}, startPositions[${aiPlayer.playerIndex}]=${startPositions[aiPlayer.playerIndex]}`);
-
-          const humanLandmass = playerRegions[humanPlayer.playerIndex]?.landmassId;
-          const aiLandmass = playerRegions[aiPlayer.playerIndex]?.landmassId;
-          if (playerRegions[humanPlayer.playerIndex]) {
-            playerRegions[humanPlayer.playerIndex].landmassId = aiLandmass;
-          }
-          if (playerRegions[aiPlayer.playerIndex]) {
-            playerRegions[aiPlayer.playerIndex].landmassId = humanLandmass;
-          }
-
-          const humanNewX = aiStartPos % iWidth;
-          const humanNewY = Math.floor(aiStartPos / iWidth);
-          console.log(`[ContinentsPP] Human (index ${humanPlayer.playerIndex}) moved to (${humanNewX}, ${humanNewY})`);
-        } else {
-          console.log(`[ContinentsPP] No suitable continent found for human - may remain isolated`);
         }
       }
+
+      if (bestSwap) {
+        // Swap positions
+        const tempPlot = startPositions[human.playerIndex];
+        startPositions[human.playerIndex] = startPositions[bestSwap.ai.playerIndex];
+        startPositions[bestSwap.ai.playerIndex] = tempPlot;
+
+        // Update playerRegions
+        if (playerRegions[human.playerIndex] && playerRegions[bestSwap.ai.playerIndex]) {
+          const tempLandmass = playerRegions[human.playerIndex].landmassId;
+          playerRegions[human.playerIndex].landmassId = playerRegions[bestSwap.ai.playerIndex].landmassId;
+          playerRegions[bestSwap.ai.playerIndex].landmassId = tempLandmass;
+        }
+
+        const newX = startPositions[human.playerIndex] % iWidth;
+        const newY = Math.floor(startPositions[human.playerIndex] / iWidth);
+        console.log(`[ContinentsPP]   Swapped Human P${human.playerIndex} ↔ AI P${bestSwap.ai.playerIndex}`);
+        console.log(`[ContinentsPP]   Human → continent ${bestSwap.fromContinent} at (${newX}, ${newY}) [${bestSwap.fromCount} players]`);
+        totalIsolationFixes++;
+        fixedThisRound = true;
+      } else {
+        console.log(`[ContinentsPP]   WARNING: No swap available for human P${human.playerIndex} on continent ${continentId}`);
+      }
     }
-    // Case 2: Human has companions but continent is overcrowded
-    else if (currentCount > capacity) {
-      console.log(`[ContinentsPP] Continent ${continentId} is overcrowded: ${currentCount} players, capacity: ${capacity}`);
-      // The existing MIN_PLAYER_DISTANCE enforcement will handle this case
-      // by swapping overcrowded players to other positions
-    }
-    // Case 3: Human has adequate companions within capacity - good!
-    else {
-      console.log(`[ContinentsPP] Human has ${aisHere.length} AI companion(s) on continent ${continentId} - OK`);
-    }
+
+    if (!fixedThisRound) break;
+  }
+
+  // FINAL VERIFICATION: Log every human's companion status with capacity tracking
+  console.log(`[ContinentsPP] === FINAL HUMAN COMPANION VERIFICATION ===`);
+  const finalPlayerMap = buildPlayerContinentMap();
+  for (const [continentId, players] of finalPlayerMap) {
+    const humans = players.filter(p => p.isHuman);
+    if (humans.length === 0) continue;
+    const companions = players.length - humans.length;
+    const tiles = continentTileCounts.get(continentId) || 0;
+    const capacity = getContinentCapacity(continentId);
+    const status = players.length >= 2 ? 'OK' : 'ISOLATED';
+    console.log(`[ContinentsPP]   Continent ${continentId}: ${humans.length} human(s), ${companions} AI companion(s), ${tiles} tiles, capacity ${capacity} [${status}]`);
   }
 
   //────────────────────────────────────────────────────────────────────────────

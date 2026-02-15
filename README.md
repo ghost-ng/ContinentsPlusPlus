@@ -30,7 +30,9 @@ The goal is simple: every new game should feel like unrolling a hand-drawn map f
 - **Organic Coastlines**: Fractal erosion creates natural-looking shores and bays
 - **Scattered Archipelagos**: Mid-ocean islands and coastal island chains
 - **Asymmetric Landmasses**: Continents vary in size like real-world geography
-- **Player Spawn Options**: Choose same hemisphere, fully random, or separate continents for multiplayer
+- **Player Spawn Options**: Choose clustered, spread, or random distribution for multiplayer
+- **Intelligent Distant Lands**: Adjacent continents connected by coast are correctly treated as reachable — only true ocean crossings count as Distant Lands
+- **Works Across All Ages**: Fully compatible with Antiquity, Exploration, and Modern era transitions
 
 ## Installation
 
@@ -93,9 +95,9 @@ Continents++ adds a **Player Spawn Distribution** option to customize how player
 
 | Setting | Description |
 |---------|-------------|
-| **Same Hemisphere (Default)** | Human players spawn in the same hemisphere. Standard Civilization behavior for team-based play. |
-| **Fully Random** | All players are randomly distributed across all continents and hemispheres. Maximum unpredictability for competitive multiplayer. |
-| **Separate Continents** | Each player starts on their own continent when possible. Encourages naval expansion and exploration. |
+| **Clustered (Default)** | Human players spawn on the same or nearby continents. Ideal for cooperative and team-based play. Maximizes distant lands for shared exploration. |
+| **Spread** | Human players spawn on different continents for competitive play. Always preserves at least one continent as distant lands for the exploration race. |
+| **Random** | All players distributed proportionally by continent size. Maximum unpredictability — you never know who your neighbors will be. |
 
 To access this option:
 1. Select **Continents++** as your map type
@@ -104,10 +106,10 @@ To access this option:
 
 ## Technical Details
 
-- Uses `UnifiedContinentsBase` from Civ VII's Voronoi plate tectonics system
+- Built on Civ VII's Voronoi plate tectonics system for natural landmass generation
 - Seeded random number generation ensures reproducible maps with the same seed
-- Compatible with all ages (Antiquity, Exploration, Modern)
 - Integrates with base game terrain generation (biomes, resources, natural wonders)
+- Smart player distribution accounts for continent size and capacity
 
 ## Compatibility
 
