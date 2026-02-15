@@ -3,4 +3,7 @@
 	<Maps>
 		<Row File="{ContinentsPlusPlus}modules/maps/continents-plus-plus.js" Name="Continents++" Description="LOC_CONTINENTS_PLUS_PLUS_DESCRIPTION" SortIndex="9"/>
 	</Maps>
+	<MapIslandBehavior>
+		<Row MapType="Continents++" AgeType="AGE_EXPLORATION" ResourceClassType="RESOURCECLASS_TREASURE"/>
+	</MapIslandBehavior>
 </Database>

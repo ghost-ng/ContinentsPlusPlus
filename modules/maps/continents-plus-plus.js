@@ -2641,33 +2641,61 @@ async function generateMap() {
     }
   }
 
-  // Build merged region mapping from reachability groups
-  const gameContinentToRegion = new Map();  // game continent ID → merged region ID
-  const regionToGameContinents = new Map();  // region ID → [continent IDs]
-  let nextRegionId = 1;
+  // Determine which game continents are "inhabited" (have player starts)
+  // Bridge from Voronoi landmassId (used by continentIsInhabited) to game continent IDs
+  const gameContIsInhabited = new Map();  // game continent ID → boolean
+  for (let y = 0; y < tiles.length; ++y) {
+    for (let x = 0; x < tiles[y].length; ++x) {
+      const tile = tiles[y][x];
+      if (tile.isLand() && (continentIsInhabited.get(tile.landmassId) ?? false)) {
+        const gameCId = GameplayMap.getContinentType(x, y);
+        if (gameCId !== -1) gameContIsInhabited.set(gameCId, true);
+      }
+    }
+  }
+  console.log(`[ContinentsPP] Inhabited game continents: [${[...gameContIsInhabited.keys()].join(', ')}]`);
 
-  // Sort groups for deterministic assignment (by smallest continent ID in each group)
-  reachabilityGroups.sort((a, b) => Math.min(...a) - Math.min(...b));
+  // Build region mapping using ONLY WEST(2) and EAST(1) for base game compatibility
+  // CRITICAL: The age transition script (age-transition-post-load.js) uses modulo arithmetic:
+  //   assignedLandmass % landmassRegionId == 0
+  // Region IDs > 2 break this check, causing resource starvation and content validation errors.
+  // WEST(2) = homeland (inhabited), EAST(1) = distant lands (uninhabited)
+  const gameContinentToRegion = new Map();  // game continent ID → WEST or EAST
+  const regionToGameContinents = new Map();  // region ID → [continent IDs]
+  const westContinents = [];  // Inhabited/reachable continents
+  const eastContinents = [];  // Distant lands continents
 
   let mergedGroupCount = 0;
   for (const group of reachabilityGroups) {
     const sortedIds = [...group].sort((a, b) => a - b);
-    regionToGameContinents.set(nextRegionId, sortedIds);
+    // A group is "inhabited" if ANY continent in it has player starts
+    const isInhabitedGroup = sortedIds.some(cId => gameContIsInhabited.get(cId) ?? false);
+    const regionId = isInhabitedGroup
+      ? LandmassRegion.LANDMASS_REGION_WEST   // 2 = homeland
+      : LandmassRegion.LANDMASS_REGION_EAST;  // 1 = distant lands
+
     for (const cId of sortedIds) {
-      gameContinentToRegion.set(cId, nextRegionId);
+      gameContinentToRegion.set(cId, regionId);
+      if (isInhabitedGroup) {
+        westContinents.push(cId);
+      } else {
+        eastContinents.push(cId);
+      }
     }
+
+    const regionLabel = isInhabitedGroup ? 'HOMELAND (WEST)' : 'DISTANT (EAST)';
     if (sortedIds.length > 1) {
-      console.log(`[ContinentsPP]   MERGED Region ${nextRegionId}: continents [${sortedIds.join(', ')}] (reachable via land/coast)`);
+      console.log(`[ContinentsPP]   MERGED ${regionLabel}: continents [${sortedIds.join(', ')}] (reachable via land/coast)`);
       mergedGroupCount++;
     } else {
-      console.log(`[ContinentsPP]   Region ${nextRegionId}: continent ${sortedIds[0]}`);
+      console.log(`[ContinentsPP]   ${regionLabel}: continent ${sortedIds[0]}`);
     }
-    nextRegionId++;
   }
 
-  const totalRegions = nextRegionId - 1;
-  console.log(`[ContinentsPP] Reachability result: ${stampedContinents.size} game continents → ${totalRegions} regions (${mergedGroupCount} merged groups)`);
-  if (totalRegions === 1 && stampedContinents.size > 1) {
+  regionToGameContinents.set(LandmassRegion.LANDMASS_REGION_WEST, westContinents);
+  regionToGameContinents.set(LandmassRegion.LANDMASS_REGION_EAST, eastContinents);
+  console.log(`[ContinentsPP] Reachability: ${stampedContinents.size} game continents → WEST(${westContinents.length}) + EAST(${eastContinents.length}) (${mergedGroupCount} merged groups)`);
+  if (eastContinents.length === 0) {
     console.log(`[ContinentsPP] NOTE: All continents reachable via coast — no Distant Lands on this map`);
   }
 
@@ -2734,7 +2762,7 @@ async function generateMap() {
   const postStampRegionData = {
     gameContinentToRegion,
     regionToGameContinents,
-    totalRegions: totalRegions,
+    totalRegions: 2,  // Always WEST(2) + EAST(1) for base game compatibility
     landKdTree: postStampLandKdTree
   };
 
