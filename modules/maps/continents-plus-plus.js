@@ -2566,27 +2566,109 @@ async function generateMap() {
   }
 
   //────────────────────────────────────────────────────────────────────────────
-  // POST-STAMP REGION ID ASSIGNMENT
-  // Assign unique region IDs based on GAME's actual continent boundaries
-  // This ensures each separate landmass (across ocean) = different region = Distant Lands
+  // POST-STAMP REGION ID ASSIGNMENT WITH REACHABILITY MERGE
+  // Flood-fill non-ocean tiles to detect which continents are reachable from
+  // each other via land + coast (no deep ocean crossing). Connected continents
+  // share a LandmassRegionId so adjacent land isn't flagged as "Distant Lands."
+  // Per Civilopedia: "Distant Lands require crossing Ocean from your Capital"
   //────────────────────────────────────────────────────────────────────────────
 
-  console.log(`[ContinentsPP] === POST-STAMP REGION ID ASSIGNMENT ===`);
-  console.log(`[ContinentsPP] Re-assigning region IDs based on game's actual continents...`);
+  console.log(`[ContinentsPP] === POST-STAMP REGION ID ASSIGNMENT (Reachability Merge) ===`);
+  console.log(`[ContinentsPP] Flood-filling non-ocean tiles to detect continent reachability...`);
 
-  // Step 1: Map each game continent to a unique region ID
-  // Game continent IDs can be arbitrary (82, 213, 229, etc.), so we remap to 1, 2, 3...
-  const gameContinentToRegion = new Map();  // game continent ID → region ID
-  const regionToGameContinent = new Map();  // region ID → game continent ID
+  // Hex neighbor helper with X-wrapping (offset coordinates)
+  const getHexNeighborsForMerge = (x, y) => {
+    const isOddRow = y % 2 === 1;
+    const offsets = isOddRow
+      ? [[-1, 0], [1, 0], [0, -1], [1, -1], [0, 1], [1, 1]]
+      : [[-1, 0], [1, 0], [-1, -1], [0, -1], [-1, 1], [0, 1]];
+    const neighbors = [];
+    for (const [dx, dy] of offsets) {
+      const nx = ((x + dx) % iWidth + iWidth) % iWidth;
+      const ny = y + dy;
+      if (ny >= 0 && ny < iHeight) {
+        neighbors.push({ x: nx, y: ny });
+      }
+    }
+    return neighbors;
+  };
+
+  // BFS flood-fill: traverse all non-ocean tiles (land + coast + shallow water)
+  // Each connected component may contain multiple game continents
+  const mergeVisited = new Set();
+  const reachabilityGroups = [];  // Array of Set<continentId>
+
+  for (let y = 0; y < iHeight; y++) {
+    for (let x = 0; x < iWidth; x++) {
+      const key = `${x},${y}`;
+      if (mergeVisited.has(key)) continue;
+
+      try {
+        const terrain = GameplayMap.getTerrainType(x, y);
+        if (terrain === globals.g_OceanTerrain) continue;  // Skip deep ocean
+      } catch (e) { continue; }
+
+      // Start BFS from this non-ocean tile
+      const continentsFound = new Set();
+      const queue = [{ x, y }];
+      mergeVisited.add(key);
+
+      while (queue.length > 0) {
+        const cur = queue.shift();
+
+        // Track any game continent encountered
+        const cId = GameplayMap.getContinentType(cur.x, cur.y);
+        if (cId !== -1) continentsFound.add(cId);
+
+        // Expand to non-ocean hex neighbors
+        for (const n of getHexNeighborsForMerge(cur.x, cur.y)) {
+          const nKey = `${n.x},${n.y}`;
+          if (mergeVisited.has(nKey)) continue;
+
+          try {
+            const nTerrain = GameplayMap.getTerrainType(n.x, n.y);
+            if (nTerrain === globals.g_OceanTerrain) continue;  // Can't cross deep ocean
+          } catch (e) { continue; }
+
+          mergeVisited.add(nKey);
+          queue.push(n);
+        }
+      }
+
+      if (continentsFound.size > 0) {
+        reachabilityGroups.push(continentsFound);
+      }
+    }
+  }
+
+  // Build merged region mapping from reachability groups
+  const gameContinentToRegion = new Map();  // game continent ID → merged region ID
+  const regionToGameContinents = new Map();  // region ID → [continent IDs]
   let nextRegionId = 1;
 
-  // Sort continent IDs for deterministic assignment
-  const sortedContinentIds = [...stampedContinents].sort((a, b) => a - b);
-  for (const continentId of sortedContinentIds) {
-    gameContinentToRegion.set(continentId, nextRegionId);
-    regionToGameContinent.set(nextRegionId, continentId);
-    console.log(`[ContinentsPP]   Game continent ${continentId} → Region ${nextRegionId}`);
+  // Sort groups for deterministic assignment (by smallest continent ID in each group)
+  reachabilityGroups.sort((a, b) => Math.min(...a) - Math.min(...b));
+
+  let mergedGroupCount = 0;
+  for (const group of reachabilityGroups) {
+    const sortedIds = [...group].sort((a, b) => a - b);
+    regionToGameContinents.set(nextRegionId, sortedIds);
+    for (const cId of sortedIds) {
+      gameContinentToRegion.set(cId, nextRegionId);
+    }
+    if (sortedIds.length > 1) {
+      console.log(`[ContinentsPP]   MERGED Region ${nextRegionId}: continents [${sortedIds.join(', ')}] (reachable via land/coast)`);
+      mergedGroupCount++;
+    } else {
+      console.log(`[ContinentsPP]   Region ${nextRegionId}: continent ${sortedIds[0]}`);
+    }
     nextRegionId++;
+  }
+
+  const totalRegions = nextRegionId - 1;
+  console.log(`[ContinentsPP] Reachability result: ${stampedContinents.size} game continents → ${totalRegions} regions (${mergedGroupCount} merged groups)`);
+  if (totalRegions === 1 && stampedContinents.size > 1) {
+    console.log(`[ContinentsPP] NOTE: All continents reachable via coast — no Distant Lands on this map`);
   }
 
   // Step 2: Build KD-tree of land tiles for coastal/water inheritance
@@ -2644,15 +2726,15 @@ async function generateMap() {
   console.log(`[ContinentsPP] Updated ${landRegionUpdates} land tiles, ${coastRegionUpdates} coastal tiles`);
   console.log(`[ContinentsPP] Region tile counts:`);
   for (const [regionId, count] of [...regionTileCounts.entries()].sort((a, b) => a[0] - b[0])) {
-    const continentId = regionToGameContinent.get(regionId);
-    console.log(`[ContinentsPP]   Region ${regionId} (continent ${continentId}): ${count} tiles`);
+    const continentIds = regionToGameContinents.get(regionId) || [];
+    console.log(`[ContinentsPP]   Region ${regionId} (continents [${continentIds.join(', ')}]): ${count} tiles`);
   }
 
   // Store mappings for later use in player assignment
   const postStampRegionData = {
     gameContinentToRegion,
-    regionToGameContinent,
-    totalRegions: nextRegionId - 1,
+    regionToGameContinents,
+    totalRegions: totalRegions,
     landKdTree: postStampLandKdTree
   };
 
@@ -2802,13 +2884,14 @@ async function generateMap() {
   }
 
   // Summarize regions with players
-  console.log(`[ContinentsPP] Players per region (each region = one game continent):`);
+  console.log(`[ContinentsPP] Players per region (regions may span multiple reachable continents):`);
   for (const [regionId, players] of [...regionToPlayers.entries()].sort((a, b) => a[0] - b[0])) {
     const humanCount = players.filter(p => p.isHuman).length;
     const aiCount = players.length - humanCount;
-    const continentId = players[0]?.gameContinentId ?? '?';
+    const continentIds = regionToGameContinents.get(regionId) || [players[0]?.gameContinentId ?? '?'];
     const isHomeland = humanCount > 0 ? ' [HUMAN HOMELAND]' : '';
-    console.log(`[ContinentsPP]   Region ${regionId} (continent ${continentId}): ${players.length} players (${humanCount} human, ${aiCount} AI)${isHomeland}`);
+    const mergeNote = continentIds.length > 1 ? ' (merged - reachable via coast)' : '';
+    console.log(`[ContinentsPP]   Region ${regionId} (continents [${continentIds.join(', ')}]): ${players.length} players (${humanCount} human, ${aiCount} AI)${isHomeland}${mergeNote}`);
   }
 
   // Check for any players on invalid regions (shouldn't happen with post-stamp assignment)
