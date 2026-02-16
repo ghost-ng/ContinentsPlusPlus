@@ -2670,6 +2670,137 @@ async function generateMap() {
   mapStats.openOceanIslandTiles = oceanIslandResult.tilesConverted;
 
   //────────────────────────────────────────────────────────────────────────────
+  // OCEAN ENFORCEMENT: Ensure distant lands are separated by deep ocean
+  // Coast tiles, atolls, and shallow water can all be traversed by boats.
+  // If these form a continuous path from homelands to distant lands, the
+  // reachability merge will merge them into one region (no Distant Lands).
+  // This step converts "bridge" coast/atoll tiles between distant and
+  // homeland continents to ocean, creating a true ocean barrier.
+  //────────────────────────────────────────────────────────────────────────────
+  {
+    const hasDistantLands = [...continentIsInhabited.values()].some(v => !v);
+
+    if (hasDistantLands) {
+      console.log(`[ContinentsPP] === OCEAN ENFORCEMENT (Distant Lands Separation) ===`);
+
+      // Hex neighbor helper (inline for scope, same logic as getHexNeighborsForMerge)
+      const getEnforcementNeighbors = (x, y) => {
+        const isOddRow = y % 2 === 1;
+        const offsets = isOddRow
+          ? [[-1, 0], [1, 0], [0, -1], [1, -1], [0, 1], [1, 1]]
+          : [[-1, 0], [1, 0], [-1, -1], [0, -1], [-1, 1], [0, 1]];
+        const neighbors = [];
+        for (const [dx, dy] of offsets) {
+          const nx = ((x + dx) % iWidth + iWidth) % iWidth;
+          const ny = y + dy;
+          if (ny >= 0 && ny < iHeight) neighbors.push({ x: nx, y: ny });
+        }
+        return neighbors;
+      };
+
+      // Find land tiles belonging to distant and homeland continents
+      const distantTileKeys = new Set();
+      const homelandTileKeys = new Set();
+
+      for (let y = 0; y < iHeight; y++) {
+        for (let x = 0; x < iWidth; x++) {
+          const tile = tiles[y]?.[x];
+          if (!tile || !tile.isLand()) continue;
+          const lmId = tile.landmassId;
+          if (lmId < 1 || lmId > numMajorContinents) continue;
+          const key = `${x},${y}`;
+          if (continentIsInhabited.get(lmId)) {
+            homelandTileKeys.add(key);
+          } else {
+            distantTileKeys.add(key);
+          }
+        }
+      }
+
+      console.log(`[ContinentsPP] Distant continent land tiles: ${distantTileKeys.size}`);
+      console.log(`[ContinentsPP] Homeland continent land tiles: ${homelandTileKeys.size}`);
+
+      if (distantTileKeys.size > 0) {
+        // BFS expand from distant land tiles through non-ocean terrain
+        // This finds all tiles reachable within ENFORCEMENT_RADIUS of distant continents
+        const ENFORCEMENT_RADIUS = 4;
+        const nearDistant = new Map();  // key -> depth
+        const distQueue = [];
+
+        for (const key of distantTileKeys) {
+          nearDistant.set(key, 0);
+          const [x, y] = key.split(',').map(Number);
+          distQueue.push({ x, y, depth: 0 });
+        }
+
+        while (distQueue.length > 0) {
+          const cur = distQueue.shift();
+          if (cur.depth >= ENFORCEMENT_RADIUS) continue;
+          for (const n of getEnforcementNeighbors(cur.x, cur.y)) {
+            const nKey = `${n.x},${n.y}`;
+            if (nearDistant.has(nKey)) continue;
+            const nTile = tiles[n.y]?.[n.x];
+            if (!nTile || nTile.terrainType === TerrainType.Ocean) continue;
+            nearDistant.set(nKey, cur.depth + 1);
+            distQueue.push({ x: n.x, y: n.y, depth: cur.depth + 1 });
+          }
+        }
+
+        // BFS expand from homeland land tiles through non-ocean terrain
+        const nearHomeland = new Map();  // key -> depth
+        const homeQueue = [];
+
+        for (const key of homelandTileKeys) {
+          nearHomeland.set(key, 0);
+          const [x, y] = key.split(',').map(Number);
+          homeQueue.push({ x, y, depth: 0 });
+        }
+
+        while (homeQueue.length > 0) {
+          const cur = homeQueue.shift();
+          if (cur.depth >= ENFORCEMENT_RADIUS) continue;
+          for (const n of getEnforcementNeighbors(cur.x, cur.y)) {
+            const nKey = `${n.x},${n.y}`;
+            if (nearHomeland.has(nKey)) continue;
+            const nTile = tiles[n.y]?.[n.x];
+            if (!nTile || nTile.terrainType === TerrainType.Ocean) continue;
+            nearHomeland.set(nKey, cur.depth + 1);
+            homeQueue.push({ x: n.x, y: n.y, depth: cur.depth + 1 });
+          }
+        }
+
+        // Convert bridge tiles: non-continent tiles in BOTH BFS zones
+        // Skip depth <= 1 from distant continent to preserve its natural coastline
+        let bridgeConverted = 0;
+        for (const [key, distDepth] of nearDistant) {
+          if (distDepth <= 1) continue;  // Preserve distant continent's coastline
+          if (!nearHomeland.has(key)) continue;  // Not near homelands = not a bridge
+          const [x, y] = key.split(',').map(Number);
+          const tile = tiles[y]?.[x];
+          if (!tile) continue;
+
+          // Don't convert major continent land tiles
+          if (tile.isLand() && tile.landmassId >= 1 && tile.landmassId <= numMajorContinents) continue;
+
+          // Convert to ocean (break the coast/atoll bridge)
+          tile.terrainType = TerrainType.Ocean;
+          bridgeConverted++;
+        }
+
+        if (bridgeConverted > 0) {
+          console.log(`[ContinentsPP] Converted ${bridgeConverted} bridge tiles to ocean`);
+          console.log(`[ContinentsPP] Bridge: coast/atoll tiles within ${ENFORCEMENT_RADIUS} hexes of BOTH distant and homeland land`);
+          console.log(`[ContinentsPP] Preserved 1-tile coastline around distant continent`);
+        } else {
+          console.log(`[ContinentsPP] No bridge tiles found — distant lands already separated by ocean`);
+        }
+      }
+    } else {
+      console.log(`[ContinentsPP] No distant lands — skipping ocean enforcement`);
+    }
+  }
+
+  //────────────────────────────────────────────────────────────────────────────
   // TERRAIN PROCESSING
   //────────────────────────────────────────────────────────────────────────────
 
