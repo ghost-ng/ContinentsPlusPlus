@@ -83,7 +83,7 @@ The mod automatically adjusts continent count based on map size:
 |----------|------------|-------------|
 | Tiny     | 3-4        | Compact landmasses for quick games |
 | Small    | 3-5        | Balanced for smaller player counts |
-| Standard | 4-5        | Classic multi-continent experience |
+| Standard | 3-4        | Classic multi-continent experience |
 | Large    | 4-6        | Expansive world with room to explore |
 | Huge     | 5-7        | Epic scale with many distinct landmasses |
 

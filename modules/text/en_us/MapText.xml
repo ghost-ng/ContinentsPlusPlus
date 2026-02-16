@@ -55,7 +55,7 @@
 			<Text>Random (Default)</Text>
 		</Row>
 		<Row Tag="LOC_CPP_CONT_RANDOM_DESC">
-			<Text>Continent count varies by map size: Tiny 2-5, Small 2-6, Standard 3-6, Large 4-7, Huge 5-8. Each game is different. Recommended for maximum replayability.</Text>
+			<Text>Continent count varies by map size: Tiny 2-5, Small 2-6, Standard 3-4, Large 4-7, Huge 5-8. Each game is different. Recommended for maximum replayability.</Text>
 		</Row>
 	</EnglishText>
 </Database>
