@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Mod id="ContinentsPlusPlus" version="1.4.0"
+<Mod id="ContinentsPlusPlus" version="1.4.1"
 	xmlns="ModInfo">
 	<Properties>
 		<Name>LOC_CONTINENTS_PLUS_PLUS_NAME</Name>
@@ -14,20 +14,26 @@
 		<Criteria id="always">
 			<AlwaysMet></AlwaysMet>
 		</Criteria>
+		<Criteria id="continents-plus-plus-map">
+			<MapInUse>{ContinentsPlusPlus}modules/maps/continents-plus-plus.js</MapInUse>
+		</Criteria>
 	</ActionCriteria>
 	<ActionGroups>
-		<ActionGroup id="base-game-main-mapscript-template" scope="game" criteria="always">
+		<!-- Game scope: Only loads when Continents++ map is selected -->
+		<ActionGroup id="base-game-main-mapscript-template" scope="game" criteria="continents-plus-plus-map">
 			<Actions>
 				<UpdateText>
 					<Item>modules/text/en_us/MapText.xml</Item>
 					<Item>modules/text/en_us/ContinentNamesText.xml</Item>
 				</UpdateText>
 				<UpdateDatabase>
+					<Item>modules/config/game-config.xml</Item>
 					<Item>modules/config/AI_Naval_Override.xml</Item>
 					<Item>modules/config/ContinentNames.xml</Item>
 				</UpdateDatabase>
 			</Actions>
 		</ActionGroup>
+		<!-- Shell scope: Always loads so map appears in picker -->
 		<ActionGroup id="shell-mapscript-template" scope="shell" criteria="always">
 			<Actions>
 				<UpdateText>

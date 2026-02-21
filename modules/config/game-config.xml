@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	Game-scope database entries for Continents++
+
+	MapIslandBehavior MUST be in game scope (not shell scope).
+	The base game loads this table via data/maps.xml in the
+	base-game-main ActionGroup (scope="game").
+-->
+<Database>
+	<MapIslandBehavior>
+		<Row MapType="Continents++" AgeType="AGE_EXPLORATION" ResourceClassType="RESOURCECLASS_TREASURE"/>
+	</MapIslandBehavior>
+</Database>
