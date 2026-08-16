@@ -1,19 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Database>
 	<EnglishText>
+		<!-- Map picker tile (shell scope needs these; ModuleText.xml is only used by the mod manager) -->
+		<Row Tag="LOC_CONTINENTS_PLUS_PLUS_DESCRIPTION">
+			<Text>Every map is unique. Generates Earth-like continents with fractal coastlines, scattered archipelagos, and asymmetric landmass sizes. Parameters randomized each game for maximum replayability.</Text>
+		</Row>
 		<!-- Player Distribution Option (Multiplayer Only) -->
 		<Row Tag="LOC_CPP_PLAYER_DISTRIBUTION">
-			<Text>Multiplayer Human Spawns</Text>
+			<Text>Multiplayer Human Spawns (C++)</Text>
 		</Row>
 		<Row Tag="LOC_CPP_PLAYER_DISTRIBUTION_DESC">
-			<Text>Multiplayer only. Controls how human players spawn relative to each other. Has no effect in single-player games (always uses Random).</Text>
+			<Text>Continents++ setting. Multiplayer only: controls how human players spawn relative to each other. Has no effect in single-player games (always uses Random).</Text>
 		</Row>
 		<!-- Distribution Mode 0: Clustered -->
 		<Row Tag="LOC_CPP_DISTRIB_CLUSTERED">
 			<Text>Clustered (Default)</Text>
 		</Row>
 		<Row Tag="LOC_CPP_DISTRIB_CLUSTERED_DESC">
-			<Text>Human players spawn on the same or nearby continents. Ideal for cooperative and team-based play. Maximizes distant lands for shared exploration.</Text>
+			<Text>Human players spawn together on as few continents as possible, with AI players filling the remaining space. Ideal for cooperative and team-based play.</Text>
 		</Row>
 		<!-- Distribution Mode 1: Spread -->
 		<Row Tag="LOC_CPP_DISTRIB_SPREAD">
@@ -27,14 +31,14 @@
 			<Text>Random</Text>
 		</Row>
 		<Row Tag="LOC_CPP_DISTRIB_RANDOM_DESC">
-			<Text>No special placement for humans. All players distributed proportionally by continent size. Maximum unpredictability.</Text>
+			<Text>No special placement for humans. Continents form 1-3 ocean-separated groups and players are distributed by continent size; each player's homeland is their own group, so other groups count as their Distant Lands. Maximum unpredictability.</Text>
 		</Row>
 		<!-- Continent Count Option -->
 		<Row Tag="LOC_CPP_CONTINENT_COUNT">
-			<Text>Continent Count</Text>
+			<Text>Continent Count (C++)</Text>
 		</Row>
 		<Row Tag="LOC_CPP_CONTINENT_COUNT_DESC">
-			<Text>Controls how many continents are generated. Affects gameplay pacing, exploration dynamics, and player density per landmass. At least one continent is always reserved as Distant Lands.</Text>
+			<Text>Continents++ setting. Controls how many player continents are generated. Dedicated Distant Lands landmasses (1-3, scaling with map size) are always generated in addition.</Text>
 		</Row>
 		<!-- Continent Count 0: Few -->
 		<Row Tag="LOC_CPP_CONT_FEW">
@@ -48,14 +52,14 @@
 			<Text>Many (5+)</Text>
 		</Row>
 		<Row Tag="LOC_CPP_CONT_MANY_DESC">
-			<Text>Generates many smaller continents. Scales with map size: Tiny 5-6, Small 5-7, Standard 5-8, Large 5-9, Huge 5-10. Players spread across landmasses. Emphasizes naval exploration and island-hopping.</Text>
+			<Text>Generates many smaller continents. Scales with map size: Tiny 5-6, Small/Standard/Large 5-7, Huge 5-8. Players spread across landmasses. Emphasizes naval exploration and island-hopping.</Text>
 		</Row>
 		<!-- Continent Count 2: Random (Default) -->
 		<Row Tag="LOC_CPP_CONT_RANDOM">
 			<Text>Random (Default)</Text>
 		</Row>
 		<Row Tag="LOC_CPP_CONT_RANDOM_DESC">
-			<Text>Continent count varies by map size: Tiny 2-5, Small 2-6, Standard 3-4, Large 4-7, Huge 5-8. Each game is different. Recommended for maximum replayability.</Text>
+			<Text>Player continent count varies by map size: Tiny 2-4, Small 2-5, Standard 3-5, Large 3-6, Huge 4-7, plus dedicated Distant Lands landmasses. Each game is different. Recommended for maximum replayability.</Text>
 		</Row>
 	</EnglishText>
 </Database>

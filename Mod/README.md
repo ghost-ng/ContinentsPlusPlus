@@ -36,10 +36,15 @@ The goal is simple: every new game should feel like unrolling a hand-drawn map f
 
 ## Installation
 
+The mod itself lives in the `Mod/` folder of this repository. Everything else
+(README, screenshots, development notes) is repository scaffolding and is **not**
+part of the mod.
+
 ### Option 1: Manual Installation
 
 1. Download or clone this repository
-2. Copy the `ContinentsPlusPlus` folder to your Civilization VII mods directory:
+2. Copy the **contents of the `Mod/` folder** into a new folder named
+   `ContinentsPlusPlus` in your Civilization VII mods directory:
    ```
    %LOCALAPPDATA%\Firaxis Games\Sid Meier's Civilization VII\Mods\
    ```
@@ -48,24 +53,41 @@ The goal is simple: every new game should feel like unrolling a hand-drawn map f
    C:\Users\YourName\AppData\Local\Firaxis Games\Sid Meier's Civilization VII\Mods\ContinentsPlusPlus\
    ```
 
-3. The folder structure should look like:
+3. The installed folder structure should look like:
    ```
    Mods/
    └── ContinentsPlusPlus/
        ├── ContinentsPlusPlus.modinfo
-       ├── README.md
        └── modules/
            ├── config/
            ├── maps/
            └── text/
    ```
 
-### Option 2: Git Clone
+   `ContinentsPlusPlus.modinfo` **must** sit at the top of the mod folder — the
+   game does not detect it nested any deeper.
 
-```bash
-cd "%LOCALAPPDATA%\Firaxis Games\Sid Meier's Civilization VII\Mods"
+### Option 2: Deploy Script (Windows)
+
+Clone the repository anywhere, then run the deploy script. It copies `Mod/`
+into the mods directory and applies the folder name for you:
+
+```powershell
 git clone https://github.com/ghost-ng/ContinentsPlusPlus.git
+cd ContinentsPlusPlus
+.\scripts\deploy.ps1
 ```
+
+Useful flags:
+
+| Flag | Effect |
+|------|--------|
+| `-WhatIf` | Show what would be copied without writing anything |
+| `-Clean` | Delete the existing deployment first, removing stale files |
+
+> **Note:** Cloning this repository *directly into* your `Mods/` directory no
+> longer works, because the `.modinfo` now lives inside `Mod/` rather than at the
+> repository root. Use one of the two methods above.
 
 ## Usage
 

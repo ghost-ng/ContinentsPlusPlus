@@ -26,8 +26,9 @@ npm-debug.log*
 *.tmp
 *~
 
-# Local documentation (not pushed to GitHub)
+# Private development data (never shipped in Mod/, never pushed to GitHub)
 CLAUDE.md
 research/
 ideas/
+docs/
 .mcp.json
