@@ -300,6 +300,55 @@ async function generateMap() {
   voronoiMap.createMajorPlayerAreas(fertilityGetter);
   const startPositions = assignStartPositionsFromHexMap(voronoiMap.getHexTiles());
 
+  //────────────────────────────────────────────────────────────────────────────
+  // SPREAD MODE: post-assignment human separation.
+  // The engine's assignStartPositionsFromTiles has bHumansTogether — when the
+  // age defines HumanPlayersPrimaryHemisphere (Antiquity does), ALL humans are
+  // forced onto the largest landmass group, defeating Spread. Fix by swapping
+  // humans that share a group with AIs from unused groups.
+  //────────────────────────────────────────────────────────────────────────────
+  if (distributionMode === 1 && humanCount >= 2) {
+    const regionOfPlot = (plot) =>
+      GameplayMap.getLandmassRegionId(plot % iWidth, Math.floor(plot / iWidth));
+    const players = aliveMajorIds
+      .filter(id => startPositions[id] != null && startPositions[id] >= 0)
+      .map(id => ({ id, isHuman: Players.isHuman(id), plot: startPositions[id],
+        region: regionOfPlot(startPositions[id]) }));
+    const humans = players.filter(p => p.isHuman);
+    const usedHumanRegions = new Set();
+    for (const human of humans) {
+      if (!usedHumanRegions.has(human.region)) {
+        usedHumanRegions.add(human.region);
+        continue;
+      }
+      // Human shares a group with an earlier human — swap with an AI in a
+      // group no human occupies yet. Pick the donor with the BEST start-plot
+      // fertility so the relocated human doesn't inherit a weak AI position.
+      const fertilityOf = (plot) => {
+        try { return StartPositioner.getPlotFertilityForCoord(plot % iWidth, Math.floor(plot / iWidth)); }
+        catch (e) { return 0; }
+      };
+      const donors = players.filter(p => !p.isHuman && p.region > 0 && !usedHumanRegions.has(p.region));
+      if (donors.length === 0) {
+        console.log(`[ContinentsPP] Spread: no free group for human ${human.id} — leaving in region ${human.region}`);
+        continue;
+      }
+      const donor = donors.reduce((best, p) => fertilityOf(p.plot) > fertilityOf(best.plot) ? p : best);
+      console.log(`[ContinentsPP] Spread: swapping human ${human.id} (region ${human.region}, fertility ${fertilityOf(human.plot)}) ` +
+        `with AI ${donor.id} (region ${donor.region}, fertility ${fertilityOf(donor.plot)}) — best of ${donors.length} donor(s)`);
+      const humanPlot = human.plot, donorPlot = donor.plot;
+      startPositions[human.id] = donorPlot;
+      startPositions[donor.id] = humanPlot;
+      StartPositioner.setStartPosition(donorPlot, human.id);
+      StartPositioner.setStartPosition(humanPlot, donor.id);
+      const tmpRegion = human.region;
+      human.region = donor.region; human.plot = donorPlot;
+      donor.region = tmpRegion; donor.plot = humanPlot;
+      usedHumanRegions.add(human.region);
+    }
+    console.log(`[ContinentsPP] Spread: humans now in regions [${humans.map(hm => hm.region).join(', ')}]`);
+  }
+
   generateDiscoveries(iWidth, iHeight, startPositions, g_PolarWaterRows);
   FertilityBuilder.recalculate();
   assignAdvancedStartRegions();

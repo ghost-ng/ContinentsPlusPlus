@@ -23,7 +23,13 @@ MCP (`execute_js`). Shared methodology lives in
 | [T04](T04-tiny-random.md) | Tiny | Random | Clustered | 1 | Min-size stress; small-map thresholds | **PASSING** |
 | [T05](T05-huge-many.md) | Huge | Many | Clustered | 1 | Max continents (5-8); generation time | **PASSING** |
 | [T06](T06-spread-override-sp.md) | Standard | Random | **Spread** | 1 | Spread must force-override to Random in SP | **PASSING** |
-| [T07](T07-multiplayer-distribution.md) | Standard | Many | Clustered & Spread | 2+ | Real multi-human distribution | manual (needs MP/hotseat) |
+| [T07](T07-multiplayer-distribution.md) | Standard | Many | Clustered & Spread | 2+ | Multi-human semantics reference (superseded by T08-T10) | reference |
+| [T08](T08-hotseat-clustered.md) | Standard | Many | Clustered | 2 | Hotseat: humans share ONE group | **PASSING** (via CDP 9444) |
+| [T09](T09-hotseat-spread.md) | Standard | Many | Spread | 2 | Hotseat: humans in DIFFERENT groups, mutually distant | **PASSING** (bug found + fixed) |
+| [T10](T10-hotseat-spread-3h.md) | Standard | Many | Spread | 3 | 3 humans → 3 groups, all pairs mutually distant | **PASSING** |
+
+Hotseat tests run over the CDP debugger (port 9444) since the tuner port
+closes in MP — full procedure and findings in [T08](T08-hotseat-clustered.md).
 
 ## Shared procedure (all tests)
 
