@@ -32,3 +32,6 @@ research/
 ideas/
 docs/
 .mcp.json
+
+# Test run evidence (renders/screenshots, ~MBs per sweep) — stays local
+tests/artifacts/
