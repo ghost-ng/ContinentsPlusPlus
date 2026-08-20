@@ -44,3 +44,4 @@ setP('ContinentsPPPlayerDistribution', 0);
 | Date | Result | Notes |
 |------|--------|-------|
 | 2026-08-16 | **PASS — 0 failures** | 5 continents + 1 distant, 2 groups, players 3/5, min dist 10, water 69.4%, 3 cross-homeland AIs verified. |
+| 2026-08-17 | **PASS — 25/25 checks** | First run under the new full-evidence procedure (README step 6). 4 continents + 2 distant == rolled, 3 groups (4/2/2), water 63.1%, distant 16.9% of land, min spawn dist 13, 6 cross-homeland AIs verified, 389 resource tiles (35 on distant). Flood-fill: 6 majors all single-region (404/348/299/259 + 136/94), 0 fused/fragmented. Gaps: same-group 3, cross-region 7 (land-to-land). Screenshot pan series + engine render + full per-tile dump cross-reviewed and consistent — see `artifacts/T03-run-20260817-*`. |

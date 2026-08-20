@@ -27,6 +27,16 @@ MCP (`execute_js`). Shared methodology lives in
 | [T08](T08-hotseat-clustered.md) | Standard | Many | Clustered | 2 | Hotseat: humans share ONE group | **PASSING** (via CDP 9444) |
 | [T09](T09-hotseat-spread.md) | Standard | Many | Spread | 2 | Hotseat: humans in DIFFERENT groups, mutually distant | **PASSING** (bug found + fixed) |
 | [T10](T10-hotseat-spread-3h.md) | Standard | Many | Spread | 3 | 3 humans → 3 groups, all pairs mutually distant | **PASSING** |
+| [T11](T11-sp-age-transition.md) | Standard | Many | Clustered | 1 | SP Antiquity→Exploration transition; treasure resources | **PASSING — release gate** |
+| [T12](T12-hotseat-age-transition.md) | Standard | Many | Spread | 2 | Hotseat age transition; per-human perspectives survive | **PASSING — MP release gate** |
+| [T13](T13-size-sweep-water-distribution.md) | **all 5** | Random | Clustered | 1 | Water % / distant-share drift vs size; 3 seeds/size; gates the size-corrected land budget | SPEC |
+| [T14](T14-distant-lands-floor.md) | **all 5** | Few | Clustered | 1 | Distant landmass viability floor (size, count, resources, settleable); gates the distant-budget floor | SPEC |
+| [T15](T15-composition-quality.md) | **all 5** | Random | Clustered | 1 | Composition metrics: debris, runts, variance ratio, spatial spread, separation gaps, biome banding | SPEC |
+| [T16](T16-hotseat-config-sweep.md) | Standard | **all 3** | **all 3** | 2-3 | Hotseat sweep: every Count × Spawns combo + min-continent Spread stress; Spread combos ×2 seeds | **PASSING (9/9 runs)** |
+| [T17](T17-modern-transition.md) | Standard | Many | — | 1 | Double transition soak: Antiquity → Exploration → **Modern**; integrity + perspective survival | **PASSING** |
+| [T18](T18-sp-new-logic-confirm.md) | Std+Small | Random+Few | — | 1 | SP confirms of channel fill, 3-continent floor, dominance cap | **PASSING (3 runs)** |
+| [T19](T19-size-sweep-captures.md) | **all 5** | mixed | — | 1 | Size sweep with captures; dominance ≤33% everywhere | **PASSING (2 findings: Tiny loner, Huge region overshoot)** |
+| [T20](T20-guardrails.md) | — | — | — | — | Regression guardrails: loner rebalance, hardened suite (+2 checks, 1 latent bug fixed), gate.ps1 + known-marginals baseline | **IN FORCE — gate.ps1 before every deploy** |
 
 Hotseat tests run over the CDP debugger (port 9444) since the tuner port
 closes in MP — full procedure and findings in [T08](T08-hotseat-clustered.md).
@@ -42,7 +52,17 @@ the **scenario-specific assertions** differ:
    again (flow entry resets it!) → Launch Game
 4. Await load → press **Begin Game**
 5. Run `scripts/mapgen-test-suite.js` + the test's extra assertions
-6. `engine.call("exitToMainMenu")`, log the result in the test's Run log
+6. **Capture full-map evidence (MANDATORY, every run):**
+   a. Reveal the whole map (`mcp__civ7__reveal_map`), then **screenshot the
+      full map** — zoom out / use the strategic view so ALL landmasses are
+      in frame (`mcp__civ7__render_map` and/or `mcp__civ7__screenshot`)
+   b. **Dump ALL map data**: full per-tile pass (terrain, biome, feature,
+      resource, continent/region id, landmass/area id via flood-fill) plus
+      the persisted `ContinentsPlusPlusStats` and captured logs
+   c. **Review BOTH against each other**: the visual must match the data
+      (landmass count, separation gaps, distant lands placement, water
+      share) — a run is not PASS until screenshot and data agree
+7. `engine.call("exitToMainMenu")`, log the result in the test's Run log
 
 Scenario expectations are checked against the persisted
 `ContinentsPlusPlusStats` (read via `Game.getProperty` /
