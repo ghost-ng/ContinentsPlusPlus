@@ -75,16 +75,82 @@
     regionIds: [...regionIds].sort((a, b) => a - b)
   };
 
+  // T19 finding: the engine may produce MORE regions than the requested
+  // landmassGroupCount (6 continents / groups=3 gave 4 regions). The real
+  // invariant: regions form a contiguous 0..N set. Overshoot is reported
+  // in the detail, not failed.
   const groupCount = modStats?.config?.landmassGroupCount ?? 10;
-  check("region IDs are 0..groupCount",
-    [...regionIds].every(r => r >= 0 && r <= groupCount),
-    "found [" + [...regionIds].sort((a, b) => a - b).join(",") + "], groups=" + groupCount);
+  const sortedRegions = [...regionIds].sort((a, b) => a - b);
+  check("region IDs contiguous from 0",
+    sortedRegions.every((r, i) => r === i),
+    "found [" + sortedRegions.join(",") + "], requested groups=" + groupCount +
+    (sortedRegions.length - 1 > groupCount ? " (ENGINE OVERSHOOT)" : ""));
   check("player landmass regions exist", [...regionIds].some(r => r > 0), "");
   check("distant lands exist (region-0 land)", distantLand > 0,
     distantLand + " tiles — without them Exploration-age treasure mechanics are dead");
   check("distant lands are minority of land", distantLand < land * 0.5,
     (distantLand / land * 100).toFixed(1) + "% of land");
   check("water 50-75%", waterPct >= 50 && waterPct <= 75, waterPct.toFixed(1) + "%");
+
+  // ── 3b. Shape guardrails (2026-08-19): dominance + inland channels ────
+  // Flood-fill physical landmasses once for both checks.
+  {
+    const key = (x, y) => y * w + x;
+    const massId = new Int16Array(w * h).fill(-1);
+    const nbrs = (x, y) => {
+      const odd = y & 1;
+      const dl = odd ? [[1,0],[-1,0],[0,1],[1,1],[0,-1],[1,-1]]
+                     : [[1,0],[-1,0],[-1,1],[0,1],[-1,-1],[0,-1]];
+      return dl.map(([dx,dy]) => [(x+dx+w)%w, y+dy]).filter(([nx,ny]) => ny>=0 && ny<h);
+    };
+    const isLandXY = (x, y) => GameplayMap.getContinentType(x, y) !== -1;
+    let nMass = 0; const massSize = [];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (!isLandXY(x,y) || massId[key(x,y)] !== -1) continue;
+      const stack = [[x,y]]; massId[key(x,y)] = nMass;
+      let tiles = 0;
+      while (stack.length) {
+        const [cx,cy] = stack.pop(); tiles++;
+        for (const [nx,ny] of nbrs(cx,cy)) {
+          if (isLandXY(nx,ny) && massId[key(nx,ny)] === -1) { massId[key(nx,ny)] = nMass; stack.push([nx,ny]); }
+        }
+      }
+      massSize.push(tiles); nMass++;
+    }
+    const majors = massSize.filter(s => s >= 20).sort((a, b) => b - a);
+    const majorLand = majors.reduce((s, t) => s + t, 0) || 1;
+    const largestShare = majors.length ? majors[0] / majorLand * 100 : 0;
+    check("largest landmass <= 45% of land (dominance rule)",
+      largestShare <= 45, largestShare.toFixed(1) + "%");
+    report.stats.largestSharePct = +largestShare.toFixed(1);
+    // long inland channels: water tiles with >=4 same-mass land neighbors,
+    // in connected runs of >=4 tiles (short bays/fjords are intended)
+    const cand = new Set();
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (isLandXY(x, y)) continue;
+      const landN = nbrs(x, y).filter(([nx,ny]) => isLandXY(nx,ny));
+      if (landN.length >= 4 && new Set(landN.map(([nx,ny]) => massId[key(nx,ny)])).size === 1)
+        cand.add(x + "," + y);
+    }
+    let longChannelTiles = 0;
+    const seen = new Set();
+    for (const k of cand) {
+      if (seen.has(k)) continue;
+      const [sx, sy] = k.split(",").map(Number);
+      const cl = [k]; seen.add(k);
+      const q = [[sx, sy]];
+      while (q.length) {
+        const [cx, cy] = q.pop();
+        for (const [nx, ny] of nbrs(cx, cy)) {
+          const nk = nx + "," + ny;
+          if (cand.has(nk) && !seen.has(nk)) { seen.add(nk); cl.push(nk); q.push([nx, ny]); }
+        }
+      }
+      if (cl.length >= 4) longChannelTiles += cl.length;
+    }
+    check("no long inland channels (<= 8 tiles)", longChannelTiles <= 8, String(longChannelTiles));
+    report.stats.longChannelTiles = longChannelTiles;
+  }
 
   // ── 4. Per-player homeland correctness ────────────────────────────────
   const playerChecks = [];
@@ -96,7 +162,7 @@
     const region = GameplayMap.getLandmassRegionId(loc.x, loc.y);
     const isHuman = Players.isHuman(id);
     const homeNotDistant = (typeof p.isDistantLands === "function") ? !p.isDistantLands(loc) : null;
-    playerChecks.push({ id, isHuman, loc, region, homeNotDistant });
+    playerChecks.push({ id, isHuman, loc, x: loc.x, y: loc.y, region, homeNotDistant });
     if (isHuman) {
       check("human " + id + " spawns on player landmass", region > 0, "region=" + region);
       if (homeNotDistant !== null) {
@@ -167,7 +233,10 @@
     }
   } catch (e) { distOk = false; }
   if (distOk && playerChecks.length > 1) {
-    check("spawns at least 6 tiles apart", minSpawnDist >= 6, "min distance = " + minSpawnDist);
+    // Guardrail: Infinity here means the coordinates were undefined — the
+    // check must fail loudly rather than pass vacuously (bug caught 2026-08-19).
+    check("spawns at least 6 tiles apart", Number.isFinite(minSpawnDist) && minSpawnDist >= 6,
+      "min distance = " + minSpawnDist);
     report.stats.minSpawnDist = minSpawnDist;
   }
 
